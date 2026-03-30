@@ -19,24 +19,32 @@ export const generateState = async (
     comparator: string,
     threshold: number,
 ) => {
-    const state = await createState(data);
-    const processedMetrics = await metricService.processMetrics(
-        metricConfigs,
-        date,
-        window,
-        auditConfig,
-    );
-    const updatedState = await updateState(
-        state._id.toString(),
-        processedMetrics,
-        numericExpression,
-        comparator,
-        threshold,
-    );
-    return updatedState;
+    try {
+        const state = await createInitialState(data);
+        const processedMetrics = await metricService.processMetrics(
+            metricConfigs,
+            date,
+            window,
+            auditConfig,
+        );
+        const updatedState = await evaluateState(
+            state._id.toString(),
+            processedMetrics,
+            numericExpression,
+            comparator,
+            threshold,
+        );
+        return updatedState;
+    } catch (error) {
+        await stateRepository.updateState(data._id?.toString() || '', {
+            computationEndDate: new Date(),
+            status: StateStatus.ABORTED,
+        });
+        throw error;
+    }
 };
 
-export const createState = async (data: Partial<IState>) => {
+export const createInitialState = async (data: Partial<IState>) => {
     return stateRepository.createState({
         signatureId: new Types.ObjectId(data.signatureId),
         computationStartDate: new Date(),
@@ -56,7 +64,7 @@ export const createState = async (data: Partial<IState>) => {
     });
 };
 
-export const updateState = async (
+export const evaluateState = async (
     id: string,
     processedMetrics: Record<string, IProcessedMetric>,
     numericExpression: string,
@@ -71,10 +79,15 @@ export const updateState = async (
         computationEndDate: new Date(),
         status: StateStatus.COMPLETED,
         numericExpressionValue: numericExpressionValue,
-        compliant: isNaN(numericExpressionValue)
-            ? null
-            : evaluatorService.evaluateCompliance(numericExpressionValue, comparator, threshold),
-        indeterminate: isNaN(numericExpressionValue) ? true : false,
+        compliant:
+            numericExpressionValue === null
+                ? null
+                : evaluatorService.evaluateCompliance(
+                      numericExpressionValue,
+                      comparator,
+                      threshold,
+                  ),
+        indeterminate: numericExpressionValue === null ? true : false,
         processedMetrics: Object.values(processedMetrics),
     });
 };
