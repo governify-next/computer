@@ -1,6 +1,5 @@
 import express from 'express';
 import helmet from 'helmet';
-import { userRoutes } from './routes/user.routes.js';
 import { stateRoutes } from './routes/state.routes.js';
 import { metricRoutes } from './routes/metric.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
@@ -20,7 +19,6 @@ const swaggerDocument = YAML.load(swaggerPath);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(healthRoutes);
-app.use('/api/v1/users', userRoutes);
 app.use('/api/v1', stateRoutes);
 app.use('/api/v1', metricRoutes);
 app.use(errorHandler);
