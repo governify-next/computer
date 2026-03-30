@@ -1,6 +1,8 @@
+import { ZodError } from 'zod';
 import { IMetric } from '../../types/metric.js';
 import { IMetricResult } from '../../types/metricResult.js';
 import { IWindow } from '../../types/window.js';
+import { ValidationError } from '../../utils/customErrors.js';
 
 import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
 
@@ -23,7 +25,16 @@ export const processMetric = async (
     auditConfig: Record<string, unknown>,
 ): Promise<IMetricResult> => {
     const metric = getMetricByName(metricName);
-    metric.metricConfigSchema.parse(metricConfig);
-    metric.auditConfigSchema.parse(auditConfig);
-    return await metric.process(date, window, metricConfig, auditConfig);
+    try {
+        metric.metricConfigSchema.parse(metricConfig);
+        metric.auditConfigSchema.parse(auditConfig);
+        return await metric.process(date, window, metricConfig, auditConfig);
+    } catch (error) {
+        if (error instanceof ZodError) {
+            throw new ValidationError('Invalid metric or audit configuration', {
+                issues: error.issues,
+            });
+        }
+        throw error;
+    }
 };
