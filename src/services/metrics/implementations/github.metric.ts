@@ -18,8 +18,8 @@ export const MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS: IMetric = {
         repo: z.string(),
     }),
     async process(_date, _window, _metricConfig, _auditConfig) {
-        const evidences: unknown[] = [];
+        const evidences: Record<string, unknown>[] = [];
 
-        return { name: this.name, value: 0, evidences };
+        return { value: 0, evidences };
     },
 };

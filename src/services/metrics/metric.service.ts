@@ -4,9 +4,11 @@ import { IMetricResult } from '../../types/metricResult.js';
 import { IWindow } from '../../types/window.js';
 import { IMetricConfig } from '../../types/metricConfig.js';
 import { ValidationError } from '../../utils/customErrors.js';
+import { IProcessedMetric } from '../../models/state.model.js';
+
 import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
 
-export const metrics = {
+export const metrics: Record<string, IMetric> = {
     MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS,
 };
 
@@ -43,17 +45,25 @@ export const processMetrics = async (
     date: Date,
     window: IWindow,
     auditConfig: Record<string, unknown>,
-): Promise<Record<string, IMetricResult>> => {
-    const processedMetrics: Record<string, IMetricResult> = {};
+): Promise<Record<string, IProcessedMetric>> => {
+    const processedMetrics: Record<string, IProcessedMetric> = {};
     for (const metricConfig of metricConfigs) {
         const metricName = metricConfig.name;
-        processedMetrics[metricName] = await processMetric(
+        const processedMetric = await processMetric(
             metricName,
             date,
             window,
             metricConfig.metricConfig,
             auditConfig,
         );
+        processedMetrics[metricName] = {
+            name: metricName,
+            collection: getMetricByName(metricName).collection,
+            fetchResultIds: [],
+            metricConfig: metricConfig.metricConfig,
+            value: processedMetric.value,
+            evidences: processedMetric.evidences,
+        };
     }
     return processedMetrics;
 };

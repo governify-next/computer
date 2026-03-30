@@ -1,5 +1,4 @@
 export interface IMetricResult {
-    name: string;
     value: number;
-    evidences: unknown[];
+    evidences: Record<string, unknown>[];
 }
