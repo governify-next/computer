@@ -1,16 +1,17 @@
-import { IAuditConfig } from '../../types/auditConfig.js';
 import { IMetric } from '../../types/metric.js';
-import { IMetricConfig } from '../../types/metricConfig.js';
 import { IMetricResult } from '../../types/metricResult.js';
 import { IWindow } from '../../types/window.js';
+
 import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
 
-export const metrics: Record<string, IMetric> = {
+export const metrics = {
     MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS,
 };
 
+export type MetricName = keyof typeof metrics;
+
 export const getMetricByName = (name: string): IMetric => {
-    const metric = metrics[name];
+    const metric = metrics[name as MetricName];
     return metric;
 };
 
@@ -18,9 +19,11 @@ export const processMetric = async (
     metricName: string,
     date: Date,
     window: IWindow,
-    metricConfig: IMetricConfig,
-    auditConfig: IAuditConfig,
+    metricConfig: Record<string, unknown>,
+    auditConfig: Record<string, unknown>,
 ): Promise<IMetricResult> => {
     const metric = getMetricByName(metricName);
+    metric.metricConfigSchema.parse(metricConfig);
+    metric.auditConfigSchema.parse(auditConfig);
     return await metric.process(date, window, metricConfig, auditConfig);
 };

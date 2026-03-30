@@ -1,5 +1,4 @@
-import { IAuditConfig } from './auditConfig.js';
-import { IMetricConfig } from './metricConfig.js';
+import { z } from 'zod';
 import { IWindow } from './window.js';
 import { IMetricResult } from './metricResult.js';
 
@@ -11,10 +10,12 @@ export interface IMetric {
         example: string;
     };
     collection: string;
-    process: (
+    metricConfigSchema: z.ZodTypeAny;
+    auditConfigSchema: z.ZodTypeAny;
+    process(
         date: Date,
         window: IWindow,
-        metricConfig: IMetricConfig,
-        auditConfig: IAuditConfig,
-    ) => Promise<IMetricResult>;
+        metricConfig: Record<string, unknown>,
+        auditConfig: Record<string, unknown>,
+    ): Promise<IMetricResult>;
 }
