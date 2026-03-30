@@ -2,8 +2,8 @@ import { ZodError } from 'zod';
 import { IMetric } from '../../types/metric.js';
 import { IMetricResult } from '../../types/metricResult.js';
 import { IWindow } from '../../types/window.js';
+import { IMetricConfig } from '../../types/metricConfig.js';
 import { ValidationError } from '../../utils/customErrors.js';
-
 import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
 
 export const metrics = {
@@ -11,7 +11,6 @@ export const metrics = {
 };
 
 export type MetricName = keyof typeof metrics;
-
 export const getMetricByName = (name: string): IMetric => {
     const metric = metrics[name as MetricName];
     return metric;
@@ -37,4 +36,24 @@ export const processMetric = async (
         }
         throw error;
     }
+};
+
+export const processMetrics = async (
+    metricConfigs: IMetricConfig[],
+    date: Date,
+    window: IWindow,
+    auditConfig: Record<string, unknown>,
+): Promise<Record<string, IMetricResult>> => {
+    const processedMetrics: Record<string, IMetricResult> = {};
+    for (const metricConfig of metricConfigs) {
+        const metricName = metricConfig.name;
+        processedMetrics[metricName] = await processMetric(
+            metricName,
+            date,
+            window,
+            metricConfig.metricConfig,
+            auditConfig,
+        );
+    }
+    return processedMetrics;
 };

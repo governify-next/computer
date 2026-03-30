@@ -1,11 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendSuccess } from '../utils/standardResponse.js';
 import * as stateService from '../services/state.service.js';
+import * as metricService from '../services/metrics/metric.service.js';
 
 export const generateState = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const state = await stateService.createState(req.body);
-        return sendSuccess(res, { data: state, message: 'State created' });
+        const processedMetrics = await metricService.processMetrics(
+            req.body.metricConfigs,
+            req.body.stateDate,
+            req.body.window,
+            req.body.auditConfig,
+        );
+
+        return sendSuccess(res, { data: processedMetrics, message: 'State created' });
     } catch (err) {
         next(err);
     }

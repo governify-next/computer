@@ -11,15 +11,15 @@ export const MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS: IMetric = {
     },
     collection: 'FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS',
     metricConfigSchema: z.object({
-        repo: z.string(),
+        team: z.string(),
         branch: z.string().optional(),
     }),
     auditConfigSchema: z.object({
-        team: z.string(),
+        repo: z.string(),
     }),
     async process(_date, _window, _metricConfig, _auditConfig) {
         const evidences: unknown[] = [];
 
-        return { value: 0, evidences };
+        return { name: this.name, value: 0, evidences };
     },
 };
