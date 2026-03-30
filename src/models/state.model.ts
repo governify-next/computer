@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { StateStatus } from '../types/stateStatus.js';
+import { StateType } from '../types/stateType.js';
 
 const processedMetricSchema = new Schema(
     {
@@ -16,9 +17,11 @@ export interface IState extends Document {
     computationStartDate: Date;
     computationEndDate: Date | null;
     stateDate: Date;
+    stateType: StateType;
     status: StateStatus;
     compliant: boolean | null;
     numericExpressionValue: number | null;
+    indeterminate: boolean | null;
     processedMetrics:
         | {
               metricId: Types.ObjectId;
@@ -33,12 +36,14 @@ const stateSchema = new Schema<IState>(
     {
         signatureId: { type: Types.ObjectId, required: true },
         computationStartDate: { type: Date, required: true },
-        computationEndDate: { type: Date, required: true },
+        computationEndDate: { type: Date, default: null },
         stateDate: { type: Date, required: true },
+        stateType: { type: String, enum: Object.values(StateType), required: true },
         status: { type: String, enum: Object.values(StateStatus), required: true },
-        compliant: { type: Boolean, required: true },
-        numericExpressionValue: { type: Number, required: true },
-        processedMetrics: [processedMetricSchema],
+        compliant: { type: Boolean, default: null },
+        numericExpressionValue: { type: Number, default: null },
+        indeterminate: { type: Boolean, default: null },
+        processedMetrics: { type: [processedMetricSchema], default: null },
     },
     { timestamps: true },
 );
