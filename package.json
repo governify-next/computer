@@ -1,5 +1,5 @@
 {
-    "name": "base",
+    "name": "reporter",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -25,15 +25,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/governify-next/base.git"
+        "url": "git+https://github.com/governify-next/reporter.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/governify-next/base/issues"
+        "url": "https://github.com/governify-next/reporter/issues"
     },
-    "homepage": "https://github.com/governify-next/base#readme",
+    "homepage": "https://github.com/governify-next/reporter#readme",
     "dependencies": {
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
