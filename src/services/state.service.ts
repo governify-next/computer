@@ -8,6 +8,25 @@ import { StateType } from '../types/stateType.js';
 import { IProcessedMetric } from '../models/state.model.js';
 import { IMetricConfig } from '../types/metricConfig.js';
 import { IWindow } from '../types/window.js';
+import { ISearchStatesInput } from '../types/searchParams.js';
+import { buildMongoQuery } from '../utils/mongoQueryBuilder.js';
+
+export const getStatesBySignatureId = async (signatureId: string) => {
+    return await stateRepository.getStatesBySignatureId(signatureId);
+};
+
+export const searchStates = async ({
+    filters = {},
+    pagination = {},
+    sort = {},
+}: ISearchStatesInput) => {
+    const mongoQuery = buildMongoQuery(filters);
+    return stateRepository.search({
+        query: mongoQuery,
+        pagination,
+        sort,
+    });
+};
 
 export const generateState = async (
     data: Partial<IState>,
@@ -55,6 +74,7 @@ export const createInitialState = async (data: Partial<IState>) => {
         numericExpression: data.numericExpression,
         comparator: data.comparator,
         threshold: data.threshold,
+        replacedNumericExpression: null,
         numericExpressionValue: null,
         compliant: null,
         indeterminate: null,
@@ -78,6 +98,10 @@ export const evaluateState = async (
     return stateRepository.updateState(id, {
         computationEndDate: new Date(),
         status: StateStatus.COMPLETED,
+        replacedNumericExpression: evaluatorService.replaceExpressionWithValues(
+            numericExpression,
+            processedMetrics,
+        ),
         numericExpressionValue: numericExpressionValue,
         compliant:
             numericExpressionValue === null

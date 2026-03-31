@@ -2,6 +2,31 @@ import { Request, Response, NextFunction } from 'express';
 import { sendSuccess } from '../utils/standardResponse.js';
 import * as stateService from '../services/state.service.js';
 
+export const getStatesBySignatureId = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { signatureId } = req.params;
+        const states = await stateService.getStatesBySignatureId(signatureId);
+        return sendSuccess(res, { data: states, message: 'States retrieved' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const searchStates = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { filters, pagination, sort } = req.body;
+        const states = await stateService.searchStates({
+            filters,
+            pagination,
+            sort,
+        });
+
+        return sendSuccess(res, { data: states, message: 'States retrieved' });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const generateState = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const {
@@ -28,13 +53,3 @@ export const generateState = async (req: Request, res: Response, next: NextFunct
         next(err);
     }
 };
-
-/*export const createStates = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const states = await stateService.createStates(req.body);
-        return sendSuccess(res, { data: states, message: 'States created' });
-    } catch (err) {
-        next(err);
-    }
-};
-*/

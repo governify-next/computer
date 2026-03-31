@@ -34,6 +34,7 @@ export interface IState extends Document {
     numericExpression: string;
     comparator: string;
     threshold: number;
+    replacedNumericExpression: string | null;
     numericExpressionValue: number | null;
     compliant: boolean | null;
     indeterminate: boolean | null;
@@ -53,6 +54,7 @@ const stateSchema = new Schema<IState>(
         numericExpression: { type: String, required: true },
         comparator: { type: String, required: true },
         threshold: { type: Number, required: true },
+        replacedNumericExpression: { type: String, default: null },
         numericExpressionValue: { type: Number, default: null },
         compliant: { type: Boolean, default: null },
         indeterminate: { type: Boolean, default: null },
