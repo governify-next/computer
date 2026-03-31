@@ -15,7 +15,7 @@ const REDIS_SLOW_RECONNECTION_STRATEGY = bootEnv.REDIS_SLOW_RECONNECTION_STRATEG
 const REDIS_RETRY_SLOW_DELAY_MS = bootEnv.REDIS_RETRY_SLOW_DELAY_MS;
 
 let client: RedisClientType;
-let isConnected = false;
+export let isConnected = false;
 let wasDisconnected = false;
 
 const createRedisClient = () => {
