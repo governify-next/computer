@@ -38,6 +38,64 @@ paths:
     # ──────────────────────────────────────────────
     # Metrics
     # ──────────────────────────────────────────────
+    /api/v1/metrics:
+        get:
+            tags:
+                - Metrics
+            summary: Get all metrics
+            operationId: getMetrics
+            security:
+                - BearerAuth: []
+            description: Retrieves a list of all available metrics with their configurations.
+            responses:
+                '200':
+                    description: List of metrics retrieved successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/Metric'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+    /api/v1/metrics/{metricName}:
+        parameters:
+            - $ref: '#/components/parameters/metricName'
+        get:
+            tags:
+                - Metrics
+            summary: Get metric by name
+            operationId: getMetricByName
+            security:
+                - BearerAuth: []
+            description: Retrieves the configuration details of a specific metric identified by its name.
+            responses:
+                '200':
+                    description: Metric retrieved successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/Metric'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
     /api/v1/metrics/{metricName}/process:
         parameters:
             - $ref: '#/components/parameters/metricName'
@@ -78,7 +136,7 @@ components:
             name: metricName
             in: path
             required: true
-            description: Name of the metric to process
+            description: Name of the metric
             schema:
                 type: string
                 example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
@@ -236,6 +294,24 @@ components:
                 - error
 
         # ── Metric ─────────────────────────
+        Metric:
+            type: object
+            description: Metric definition and configuration
+            properties:
+                name:
+                    type: string
+                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                description:
+                    type: string
+                    example: Counts the number of commits in a GitHub repository
+                metricConfigSchema:
+                    $ref: '#/components/schemas/MetricConfigSchema'
+                auditConfigSchema:
+                    $ref: '#/components/schemas/AuditConfigSchema'
+                script:
+                    type: string
+                    example: |
+                        async process(_date,_window,_metricConfig,_auditConfig){const evidences=[];return{value:0,evidences}}
         MetricResult:
             type: object
             description: Result of processing a metric
@@ -281,6 +357,88 @@ components:
             example:
                 tag: 'feat'
 
+        MetricConfigSchema:
+            type: object
+            description: JSON Schema for validating metric configuration (Zod-like structure)
+            properties:
+                type:
+                    type: string
+                    example: object
+                def:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                            example: object
+                        shape:
+                            type: object
+                            additionalProperties:
+                                type: object
+                                properties:
+                                    def:
+                                        type: object
+                                        properties:
+                                            type:
+                                                type: string
+                                                example: string
+                                            innerType:
+                                                type: object
+                                                nullable: true
+                                                properties:
+                                                    def:
+                                                        type: object
+                                                        properties:
+                                                            type:
+                                                                type: string
+                                                                example: string
+                                                    type:
+                                                        type: string
+                                                        example: string
+                                                    format:
+                                                        type: string
+                                                        nullable: true
+                                                    minLength:
+                                                        type: integer
+                                                        nullable: true
+                                                    maxLength:
+                                                        type: integer
+                                                        nullable: true
+                                    type:
+                                        type: string
+                                        example: string
+                                    format:
+                                        type: string
+                                        nullable: true
+                                    minLength:
+                                        type: integer
+                                        nullable: true
+                                    maxLength:
+                                        type: integer
+                                        nullable: true
+            example:
+                type: object
+                def:
+                    type: object
+                    shape:
+                        tag:
+                            def:
+                                type: string
+                            type: string
+                            format: null
+                            minLength: null
+                            maxLength: null
+                        branch:
+                            def:
+                                type: optional
+                                innerType:
+                                    def:
+                                        type: string
+                                    type: string
+                                    format: null
+                                    minLength: null
+                                    maxLength: null
+                            type: optional
+
         # ── AuditConfig ─────────────────────────
         AuditConfig:
             type: object
@@ -289,3 +447,59 @@ components:
             example:
                 owner: 'johndoe'
                 repository: 'governify-next'
+
+        AuditConfigSchema:
+            type: object
+            description: JSON Schema for validating audit configuration (Zod-like structure)
+            properties:
+                type:
+                    type: string
+                    example: object
+                def:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                            example: object
+                        shape:
+                            type: object
+                            additionalProperties:
+                                type: object
+                                properties:
+                                    def:
+                                        type: object
+                                        properties:
+                                            type:
+                                                type: string
+                                                example: string
+                                    type:
+                                        type: string
+                                        example: string
+                                    format:
+                                        type: string
+                                        nullable: true
+                                    minLength:
+                                        type: integer
+                                        nullable: true
+                                    maxLength:
+                                        type: integer
+                                        nullable: true
+            example:
+                type: object
+                def:
+                    type: object
+                    shape:
+                        owner:
+                            def:
+                                type: string
+                            type: string
+                            format: null
+                            minLength: null
+                            maxLength: null
+                        repository:
+                            def:
+                                type: string
+                            type: string
+                            format: null
+                            minLength: null
+                            maxLength: null

@@ -18,4 +18,5 @@ export interface IMetric {
         metricConfig: Record<string, unknown>,
         auditConfig: Record<string, unknown>,
     ): Promise<IMetricResult>;
+    script?: string;
 }

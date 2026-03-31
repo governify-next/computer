@@ -12,10 +12,23 @@ export const metrics: Record<string, IMetric> = {
     MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS,
 };
 
+// This function injects the stringified version of the process function into each metric for documentation purposes
+const injectScriptStringToMetric = (metrics: Record<string, IMetric>): Record<string, IMetric> => {
+    Object.values(metrics).forEach((metric) => {
+        metric.script = metric.process.toString();
+    });
+    return metrics;
+};
+injectScriptStringToMetric(metrics);
+
 export type MetricName = keyof typeof metrics;
 export const getMetricByName = (name: string): IMetric => {
     const metric = metrics[name as MetricName];
     return metric;
+};
+
+export const getMetrics = (): IMetric[] => {
+    return Object.values(metrics);
 };
 
 export const processMetric = async (

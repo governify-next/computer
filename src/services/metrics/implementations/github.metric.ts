@@ -21,6 +21,6 @@ export const MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS: IMetric = {
     async process(_date, _window, _metricConfig, _auditConfig) {
         const evidences: Record<string, unknown>[] = [];
 
-        return { value: 0, evidences };
+        return { value: evidences.length, evidences };
     },
 };
