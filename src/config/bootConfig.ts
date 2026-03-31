@@ -20,7 +20,12 @@ export const bootEnv = {
     JWT_SECRET: process.env.JWT_SECRET || 'governify-secret',
 
     // Redis settings
-    REDIS_ENABLED: process.env.REDIS_ENABLED || 'true',
-    REDIS_MAX_RETRIES: process.env.REDIS_MAX_RETRIES || '5',
-    REDIS_RETRY_DELAY_MS: process.env.REDIS_RETRY_DELAY_MS || '2000',
+    REDIS_ENABLED: process.env.REDIS_ENABLED === 'true',
+    REDIS_MAX_RETRIES: Number(process.env.REDIS_MAX_RETRIES || '5'),
+    REDIS_RETRY_DELAY_MS: Number(process.env.REDIS_RETRY_DELAY_MS || '2000'),
+    REDIS_SLOW_RECONNECTION_STRATEGY: process.env.REDIS_SLOW_RECONNECTION_STRATEGY === 'true',
+    REDIS_SLOW_RECONNECTION_MAX_RETRIES: Number(
+        process.env.REDIS_SLOW_RECONNECTION_MAX_RETRIES || '10',
+    ),
+    REDIS_RETRY_SLOW_DELAY_MS: Number(process.env.REDIS_RETRY_SLOW_DELAY_MS || '10000'),
 };
