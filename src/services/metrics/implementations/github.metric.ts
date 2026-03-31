@@ -11,11 +11,12 @@ export const MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS: IMetric = {
     },
     collection: 'FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS',
     metricConfigSchema: z.object({
-        team: z.string(),
+        tag: z.string(),
         branch: z.string().optional(),
     }),
     auditConfigSchema: z.object({
-        repo: z.string(),
+        owner: z.string(),
+        repository: z.string(),
     }),
     async process(_date, _window, _metricConfig, _auditConfig) {
         const evidences: Record<string, unknown>[] = [];

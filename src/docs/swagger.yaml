@@ -1,11 +1,24 @@
 openapi: 3.0.0
 info:
-    title: Express API Boilerplatesss
+    title: Reporter API
     version: 1.0.0
-    description: A simple Express API with TypeScript
+    description: |
+        REST API for managing metrics and states within Reporter API.
 servers:
     - url: /
+
+tags:
+    - name: Health
+      description: Server health check
+    - name: Metrics
+      description: Metric management
+    - name: States
+      description: State management
+
 paths:
+    # ──────────────────────────────────────────────
+    # Health
+    # ──────────────────────────────────────────────
     /health:
         get:
             tags:
@@ -21,12 +34,258 @@ paths:
                                 properties:
                                     status:
                                         type: string
+
+    # ──────────────────────────────────────────────
+    # Metrics
+    # ──────────────────────────────────────────────
+    /api/v1/metrics/{metricName}/process:
+        parameters:
+            - $ref: '#/components/parameters/metricName'
+        post:
+            tags:
+                - Metrics
+            summary: Process a metric
+            operationId: processMetric
+            security:
+                - BearerAuth: []
+            description: Executes the processing of a metric based on the provided configuration and time window.
+            requestBody:
+                $ref: '#/components/requestBodies/ProcessMetricBody'
+            responses:
+                '200':
+                    description: Metric processed successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/MetricResult'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
 components:
+    # ── Parameters ────────────────────────────
+    parameters:
+        metricName:
+            name: metricName
+            in: path
+            required: true
+            description: Name of the metric to process
+            schema:
+                type: string
+                example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+    # ── Request Bodies ────────────────────────
+    requestBodies:
+        ProcessMetricBody:
+            description: Request body for processing a metric
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            date:
+                                type: string
+                                format: date-time
+                                example: '2025-12-25T20:00:00.000Z'
+                            window:
+                                $ref: '#/components/schemas/Window'
+                            metricConfig:
+                                $ref: '#/components/schemas/MetricConfig'
+                            auditConfig:
+                                $ref: '#/components/schemas/AuditConfig'
+                        required:
+                            - date
+                            - window
+                            - metricConfig
+                            - auditConfig
+
+    # ── Reusable responses ────────────────────────
+    responses:
+        ValidationError:
+            description: Validation error in the submitted data
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    example:
+                        success: false
+                        message: Validation error
+                        httpStatus: 400
+                        appCode: VALIDATION_ERROR
+                        data: null
+                        error:
+                            message: Validation error
+                            details: null
+        NotFound:
+            description: The requested resource does not exist
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    example:
+                        success: false
+                        message: Resource not found
+                        httpStatus: 404
+                        appCode: NOT_FOUND
+                        data: null
+                        error:
+                            message: Resource not found
+                            details: null
+        Unauthorized:
+            description: Missing or invalid authentication token
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    example:
+                        success: false
+                        message: Authorization header missing or malformed
+                        httpStatus: 401
+                        appCode: UNAUTHORIZED
+                        data: null
+                        error:
+                            message: Authorization header missing or malformed
+                            details: null
+        InternalError:
+            description: Internal server error
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    example:
+                        success: false
+                        message: Internal server error
+                        httpStatus: 500
+                        appCode: UNKNOWN_ERROR
+                        data: null
+                        error:
+                            message: Internal server error
+                            details: null
+
+    # ── Schemas ───────────────────────────────────
     schemas:
-    Error:
-        type: object
-        properties:
-            error:
-                type: string
-            message:
-                type: string
+        # ── Standard response ────────────────────
+        SuccessResponse:
+            type: object
+            description: Standard wrapper for all successful API responses
+            properties:
+                success:
+                    type: boolean
+                    example: true
+                message:
+                    type: string
+                    example: OK
+                httpStatus:
+                    type: integer
+                    example: 200
+                appCode:
+                    type: string
+                    example: SUCCESS
+                error:
+                    type: object
+                    nullable: true
+                    example: null
+            required:
+                - success
+                - message
+                - httpStatus
+                - appCode
+                - data
+                - error
+
+        ErrorResponse:
+            type: object
+            description: Standard wrapper for all error API responses
+            properties:
+                success:
+                    type: boolean
+                    example: false
+                message:
+                    type: string
+                httpStatus:
+                    type: integer
+                appCode:
+                    type: string
+                data:
+                    type: object
+                    nullable: true
+                    example: null
+                error:
+                    type: object
+                    properties:
+                        message:
+                            type: string
+                        details:
+                            description: Additional error information (may be null)
+                            type: object
+                            nullable: true
+            required:
+                - success
+                - message
+                - httpStatus
+                - appCode
+                - data
+                - error
+
+        # ── Metric ─────────────────────────
+        MetricResult:
+            type: object
+            description: Result of processing a metric
+            properties:
+                value:
+                    type: number
+                    example: 42
+                evidences:
+                    type: array
+                    items:
+                        type: object
+                        example:
+                            name: 'feat: add new API endpoint'
+                            author: 'johndoe'
+
+        # ── Window ─────────────────────────
+        Window:
+            type: object
+            description: Time window configuration for metric processing
+            properties:
+                period:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            unit:
+                                type: string
+                                enum: [minute, hour, day, week, month]
+                                example: day
+                            value:
+                                type: integer
+                                example: 1
+                anchorDate:
+                    type: string
+                    format: date-time
+                    example: '2025-12-08T20:00:00.000Z'
+
+        # ── MetricConfig ─────────────────────────
+        MetricConfig:
+            type: object
+            description: Configuration details for a metric (dynamic structure depending on metric type)
+            additionalProperties: true
+            example:
+                tag: 'feat'
+
+        # ── AuditConfig ─────────────────────────
+        AuditConfig:
+            type: object
+            description: Configuration for auditing metric processing
+            additionalProperties: true
+            example:
+                owner: 'johndoe'
+                repository: 'governify-next'
