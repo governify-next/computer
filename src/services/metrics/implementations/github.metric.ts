@@ -9,7 +9,7 @@ export const MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS: IMetric = {
         example:
             'If the team made 50 commits to the repository in the last month, the metric value would be 50.',
     },
-    collection: 'FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS',
+    fetcher: 'FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS',
     metricConfigSchema: z.object({
         tag: z.string(),
         branch: z.string().optional(),

@@ -120,7 +120,7 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              $ref: '#/components/schemas/MetricResult'
+                                              $ref: '#/components/schemas/ProcessedMetricResult'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -304,6 +304,9 @@ components:
                 description:
                     type: string
                     example: Counts the number of commits in a GitHub repository
+                fetcher:
+                    type: string
+                    example: FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS
                 metricConfigSchema:
                     $ref: '#/components/schemas/MetricConfigSchema'
                 auditConfigSchema:
@@ -312,7 +315,7 @@ components:
                     type: string
                     example: |
                         async process(_date,_window,_metricConfig,_auditConfig){const evidences=[];return{value:0,evidences}}
-        MetricResult:
+        ProcessedMetricResult:
             type: object
             description: Result of processing a metric
             properties:

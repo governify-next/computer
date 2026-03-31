@@ -6,7 +6,7 @@ import { IWindow } from '../types/window.js';
 const processedMetricSchema = new Schema(
     {
         name: { type: String, required: true },
-        collection: { type: String, required: true },
+        fetcher: { type: String, required: true },
         fetchResultIds: [{ type: Types.ObjectId, required: true }],
         metricConfig: { type: Schema.Types.Mixed, required: true },
         value: { type: Number, required: true },
@@ -17,7 +17,7 @@ const processedMetricSchema = new Schema(
 
 export interface IProcessedMetric {
     name: string;
-    collection: string;
+    fetcher: string;
     fetchResultIds: string[];
     metricConfig: Record<string, unknown>;
     value: number;

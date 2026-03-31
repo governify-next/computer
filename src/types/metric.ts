@@ -9,7 +9,7 @@ export interface IMetric {
         description: string;
         example: string;
     };
-    collection: string;
+    fetcher: string;
     metricConfigSchema: z.ZodTypeAny;
     auditConfigSchema: z.ZodTypeAny;
     process(

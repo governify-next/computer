@@ -71,7 +71,7 @@ export const processMetrics = async (
         );
         processedMetrics[metricName] = {
             name: metricName,
-            collection: getMetricByName(metricName).collection,
+            fetcher: getMetricByName(metricName).fetcher,
             fetchResultIds: [],
             metricConfig: metricConfig.metricConfig,
             value: processedMetric.value,
