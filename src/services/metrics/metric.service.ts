@@ -104,13 +104,15 @@ export const validateMetric = async (
             throw error;
         }
     }
-    try {
-        metric.auditConfigSchema.parse(auditConfig);
-    } catch (error) {
-        if (error instanceof ZodError) {
-            auditIssues = error.issues;
-        } else {
-            throw error;
+    if (auditConfig) {
+        try {
+            metric.auditConfigSchema.parse(auditConfig);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                auditIssues = error.issues;
+            } else {
+                throw error;
+            }
         }
     }
     if (metricIssues.length || auditIssues.length) {
