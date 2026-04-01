@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import * as metricController from '../controllers/metric.controller.js';
-import { validateMetricName, validateMetricValidation } from '../middlewares/metric.validator.js';
+import {
+    validateMetricName,
+    validateMetricValidation,
+    validateProcessMetricValidation,
+} from '../middlewares/metric.validator.js';
 
 export const metricRoutes = Router();
 
@@ -9,6 +13,7 @@ metricRoutes.get('/metrics/:metricName', validateMetricName, metricController.ge
 metricRoutes.post(
     '/metrics/:metricName/process',
     validateMetricName,
+    validateProcessMetricValidation,
     metricController.processMetric,
 );
 metricRoutes.post(
