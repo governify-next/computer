@@ -56,3 +56,36 @@ export const generateState = async (req: Request, res: Response, next: NextFunct
         next(err);
     }
 };
+
+export const generateStates = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { stateDate, signatures } = req.body;
+        const states: unknown[] = [];
+        for (const signature of signatures) {
+            const partialState: Partial<IState> = {
+                signatureId: signature.signatureId,
+                stateDate: stateDate,
+                numericExpression: signature.guarantee.numericExpression,
+                comparator: signature.guarantee.comparator,
+                threshold: signature.guarantee.threshold,
+                window: signature.guarantee.window,
+                auditConfig: signature.auditConfig,
+            };
+            const state = await stateService.generateState(
+                false,
+                partialState,
+                signature.guarantee.metricConfigs,
+                stateDate,
+                signature.guarantee.window,
+                signature.auditConfig,
+                signature.guarantee.numericExpression,
+                signature.guarantee.comparator,
+                signature.guarantee.threshold,
+            );
+            states.push(state);
+        }
+        return sendSuccess(res, { data: states, message: 'States created' });
+    } catch (err) {
+        next(err);
+    }
+};
