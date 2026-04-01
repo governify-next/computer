@@ -80,3 +80,62 @@ export const processMetrics = async (
     }
     return processedMetrics;
 };
+
+export const validateMetric = async (
+    metricName: string,
+    metricConfig: Record<string, unknown>,
+    auditConfig: Record<string, unknown>,
+): Promise<MetricValidationResponse> => {
+    const metric = getMetricByName(metricName);
+    if (!metric) {
+        return {
+            valid: false,
+            error: `Metric "${metricName}" not found`,
+        };
+    }
+    let metricIssues: ZodError['issues'] = [];
+    let auditIssues: ZodError['issues'] = [];
+    try {
+        metric.metricConfigSchema.parse(metricConfig);
+    } catch (error) {
+        if (error instanceof ZodError) {
+            metricIssues = error.issues;
+        } else {
+            throw error;
+        }
+    }
+    try {
+        metric.auditConfigSchema.parse(auditConfig);
+    } catch (error) {
+        if (error instanceof ZodError) {
+            auditIssues = error.issues;
+        } else {
+            throw error;
+        }
+    }
+    if (metricIssues.length || auditIssues.length) {
+        let errorMessage = '';
+
+        if (metricIssues.length && auditIssues.length) {
+            errorMessage = 'Invalid metricConfig and auditConfig';
+        } else if (metricIssues.length) {
+            errorMessage = 'Invalid metricConfig';
+        } else {
+            errorMessage = 'Invalid auditConfig';
+        }
+        return {
+            valid: false,
+            error: errorMessage,
+            issues: [
+                ...metricIssues.map((i) => ({ ...i, source: 'metricConfig' })),
+                ...auditIssues.map((i) => ({ ...i, source: 'auditConfig' })),
+            ],
+        };
+    }
+
+    return { valid: true };
+};
+
+type MetricValidationResponse =
+    | { valid: true }
+    | { valid: false; error: string; issues?: ZodError['issues'] };

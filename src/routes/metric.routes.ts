@@ -11,3 +11,4 @@ metricRoutes.post(
     validateMetricName,
     metricController.processMetric,
 );
+metricRoutes.post('/metrics/:metricName/validate', metricController.validateMetric);

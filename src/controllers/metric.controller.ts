@@ -38,3 +38,15 @@ export const getMetricByName = async (req: Request, res: Response, next: NextFun
         next(err);
     }
 };
+
+export const validateMetric = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { metricName } = req.params;
+        const { metricConfig, auditConfig } = req.body;
+
+        const result = await metricService.validateMetric(metricName, metricConfig, auditConfig);
+        return sendSuccess(res, { data: result, message: 'Metric validated' });
+    } catch (err) {
+        next(err);
+    }
+};
