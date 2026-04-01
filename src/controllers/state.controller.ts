@@ -31,6 +31,7 @@ export const searchStates = async (req: Request, res: Response, next: NextFuncti
 export const generateState = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { stateDate, auditConfig, guarantee } = req.body;
+        const isAsync = req.query.isAsync === 'true';
         const partialState: Partial<IState> = {
             signatureId: req.body.signatureId,
             stateDate,
@@ -41,7 +42,7 @@ export const generateState = async (req: Request, res: Response, next: NextFunct
             auditConfig,
         };
         const state = await stateService.generateState(
-            req.query.isAsync === 'true',
+            isAsync,
             partialState,
             guarantee.metricConfigs,
             stateDate,
@@ -51,7 +52,10 @@ export const generateState = async (req: Request, res: Response, next: NextFunct
             guarantee.comparator,
             guarantee.threshold,
         );
-        return sendSuccess(res, { data: state, message: 'State created' });
+        return sendSuccess(res, {
+            data: state,
+            message: isAsync ? 'State created' : 'State created and generated',
+        });
     } catch (err) {
         next(err);
     }
@@ -60,6 +64,7 @@ export const generateState = async (req: Request, res: Response, next: NextFunct
 export const generateStates = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { stateDate, signatures } = req.body;
+        const isAsync = req.query.isAsync === 'true';
         const states: unknown[] = [];
         for (const signature of signatures) {
             const partialState: Partial<IState> = {
@@ -72,7 +77,7 @@ export const generateStates = async (req: Request, res: Response, next: NextFunc
                 auditConfig: signature.auditConfig,
             };
             const state = await stateService.generateState(
-                false,
+                isAsync,
                 partialState,
                 signature.guarantee.metricConfigs,
                 stateDate,
@@ -84,7 +89,10 @@ export const generateStates = async (req: Request, res: Response, next: NextFunc
             );
             states.push(state);
         }
-        return sendSuccess(res, { data: states, message: 'States created' });
+        return sendSuccess(res, {
+            data: states,
+            message: isAsync ? 'States created' : 'States created and generated',
+        });
     } catch (err) {
         next(err);
     }
