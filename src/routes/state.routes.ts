@@ -5,4 +5,4 @@ export const stateRoutes = Router();
 
 stateRoutes.post('/state/generate', stateController.generateState);
 stateRoutes.post('/states/search', stateController.searchStates);
-stateRoutes.get('/states/:signatureId', stateController.getStatesBySignatureId);
+stateRoutes.get('/states/:id', stateController.getStateById);

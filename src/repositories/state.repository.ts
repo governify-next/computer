@@ -22,10 +22,6 @@ export const deleteState = async (id: string) => {
     return await State.findByIdAndDelete(id);
 };
 
-export const getStatesBySignatureId = async (signatureId: string) => {
-    return await State.find({ signatureId });
-};
-
 export const search = async ({ query = {}, pagination = {}, sort = {} }: ISearchParams) => {
     return State.find({
         ...query,
