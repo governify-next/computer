@@ -11,23 +11,6 @@ import { IWindow } from '../types/window.js';
 import { ISearchStatesInput } from '../types/searchParams.js';
 import { buildMongoQuery } from '../utils/mongoQueryBuilder.js';
 
-export const getStateById = async (id: string) => {
-    return await stateRepository.getStateById(id);
-};
-
-export const searchStates = async ({
-    filters = {},
-    pagination = {},
-    sort = {},
-}: ISearchStatesInput) => {
-    const mongoQuery = buildMongoQuery(filters);
-    return stateRepository.search({
-        query: mongoQuery,
-        pagination,
-        sort,
-    });
-};
-
 export const generateState = async (
     isAsync: boolean,
     partialState: Partial<IState>,
@@ -56,7 +39,7 @@ export const generateState = async (
                 threshold,
             );
         } catch (error) {
-            await stateRepository.updateState(state._id.toString(), {
+            await stateRepository.updateStateById(state._id.toString(), {
                 computationEndDate: new Date(),
                 status: StateStatus.ABORTED,
             });
@@ -104,7 +87,7 @@ export const evaluateState = async (
         numericExpression,
         processedMetrics,
     );
-    return stateRepository.updateState(id, {
+    return stateRepository.updateStateById(id, {
         computationEndDate: new Date(),
         status: StateStatus.COMPLETED,
         replacedNumericExpression: evaluatorService.replaceExpressionWithValues(
@@ -123,4 +106,37 @@ export const evaluateState = async (
         indeterminate: numericExpressionValue === null ? true : false,
         processedMetrics: Object.values(processedMetrics),
     });
+};
+
+export const getStateById = async (id: string) => {
+    return await stateRepository.getStateById(id);
+};
+
+export const searchStates = async ({
+    filters = {},
+    pagination = {},
+    sort = {},
+}: ISearchStatesInput) => {
+    const mongoQuery = buildMongoQuery(filters);
+    return stateRepository.search({
+        query: mongoQuery,
+        pagination,
+        sort,
+    });
+};
+
+export const updateStateById = async (id: string, data: Partial<IState>) => {
+    return await stateRepository.updateStateById(id, data);
+};
+
+export const deleteStateById = async (id: string) => {
+    return await stateRepository.deleteStateById(id);
+};
+
+export const getStatesBySignatureId = async (signatureId: string) => {
+    return await stateRepository.getStatesBySignatureId(signatureId);
+};
+
+export const deleteStatesBySignatureId = async (signatureId: string) => {
+    return await stateRepository.deleteStatesBySignatureId(signatureId);
 };

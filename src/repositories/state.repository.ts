@@ -1,3 +1,4 @@
+import { get } from 'node:http';
 import State, { IState } from '../models/state.model.js';
 import { ISearchParams } from '../types/searchParams.js';
 
@@ -14,12 +15,22 @@ export const createState = async (data: Partial<IState>) => {
     return await state.save();
 };
 
-export const updateState = async (id: string, data: Partial<IState>) => {
+export const updateStateById = async (id: string, data: Partial<IState>) => {
     return await State.findByIdAndUpdate(id, data, { new: true });
 };
 
-export const deleteState = async (id: string) => {
+export const deleteStateById = async (id: string) => {
     return await State.findByIdAndDelete(id);
+};
+
+export const getStatesBySignatureId = async (signatureId: string) => {
+    return await State.find({ signatureId });
+};
+
+export const deleteStatesBySignatureId = async (signatureId: string) => {
+    const statesToDelete = await State.find({ signatureId });
+    await State.deleteMany({ signatureId });
+    return statesToDelete;
 };
 
 export const search = async ({ query = {}, pagination = {}, sort = {} }: ISearchParams) => {
