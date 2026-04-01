@@ -95,13 +95,15 @@ export const validateMetric = async (
     }
     let metricIssues: ZodError['issues'] = [];
     let auditIssues: ZodError['issues'] = [];
-    try {
-        metric.metricConfigSchema.parse(metricConfig);
-    } catch (error) {
-        if (error instanceof ZodError) {
-            metricIssues = error.issues;
-        } else {
-            throw error;
+    if (metricConfig) {
+        try {
+            metric.metricConfigSchema.parse(metricConfig);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                metricIssues = error.issues;
+            } else {
+                throw error;
+            }
         }
     }
     if (auditConfig) {
