@@ -55,7 +55,6 @@ export const generateState = async (
 };
 
 export const createInitialState = async (data: Partial<IState>) => {
-    console.log('Creating initial state with data:', data);
     return stateRepository.createState({
         signatureId: new Types.ObjectId(data.signatureId),
         computationStartDate: new Date(),
