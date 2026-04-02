@@ -45,6 +45,14 @@ export const validateMetric = async (req: Request, res: Response, next: NextFunc
         const { metricConfig, auditConfig } = req.body;
 
         const result = await metricService.validateMetric(metricName, metricConfig, auditConfig);
+        if (!result.valid) {
+            return sendSuccess(res, {
+                data: result,
+                message: 'Metric validation failed',
+                httpStatus: 400,
+                appCode: 'VALIDATION_ERROR',
+            });
+        }
         return sendSuccess(res, { data: result, message: 'Metric validated' });
     } catch (err) {
         next(err);
