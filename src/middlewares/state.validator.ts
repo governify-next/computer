@@ -1,7 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
 import { NotFoundError, ValidationError } from '../utils/customErrors.js';
-import { getStateById, getStatesBySignatureId } from '../services/state.service.js';
+import * as stateService from '../services/state.service.js';
 
 // ─── Express-validator ─────────────────────────────
 
@@ -18,7 +18,7 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
 export const validateStateId = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
-        const state = await getStateById(id);
+        const state = await stateService.getStateById(id);
         if (!state) {
             return next(new NotFoundError(`State ${id} not found`));
         }
@@ -31,7 +31,7 @@ export const validateStateId = async (req: Request, res: Response, next: NextFun
 export const validateSignatureId = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { signatureId } = req.params;
-        const states = await getStatesBySignatureId(signatureId);
+        const states = await stateService.getStatesBySignatureId(signatureId);
         if (!states || states.length === 0) {
             return next(new NotFoundError(`States for signature ${signatureId} not found`));
         }

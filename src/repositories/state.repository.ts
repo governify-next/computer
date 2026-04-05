@@ -1,4 +1,3 @@
-import { get } from 'node:http';
 import State, { IState } from '../models/state.model.js';
 import { ISearchParams } from '../types/searchParams.js';
 

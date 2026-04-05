@@ -1,7 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
 import { NotFoundError, ValidationError } from '../utils/customErrors.js';
-import { getMetricByName } from '../services/metrics/metric.service.js';
+import * as metricService from '../services/metrics/metric.service.js';
 
 // ─── Express-validator ─────────────────────────────
 
@@ -14,7 +14,7 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
 export const validateMetricName = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { metricName } = req.params;
-        const metric = getMetricByName(metricName);
+        const metric = metricService.getMetricByName(metricName);
         if (!metric) {
             return next(new NotFoundError(`Metric ${metricName} not found`));
         }

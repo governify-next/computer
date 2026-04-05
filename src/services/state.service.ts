@@ -22,7 +22,7 @@ export const generateState = async (
     comparator: string,
     threshold: number,
 ) => {
-    const state = await createInitialState(partialState);
+    const initialState = await createInitialState(partialState);
     const processAndEvaluateState = async () => {
         try {
             const processedMetrics = await metricService.processMetrics(
@@ -32,16 +32,16 @@ export const generateState = async (
                 auditConfig,
             );
             return await evaluateState(
-                state._id.toString(),
+                initialState._id.toString(),
                 processedMetrics,
                 numericExpression,
                 comparator,
                 threshold,
             );
         } catch (error) {
-            await stateRepository.updateStateById(state._id.toString(), {
+            await stateRepository.updateStateById(initialState._id.toString(), {
                 computationEndDate: new Date(),
-                status: StateStatus.ABORTED,
+                status: StateStatus.FAILED,
             });
             throw error;
         }
@@ -49,7 +49,7 @@ export const generateState = async (
     if (isAsync) {
         // Async
         void processAndEvaluateState();
-        return state;
+        return initialState;
     }
     return await processAndEvaluateState(); // Sync
 };

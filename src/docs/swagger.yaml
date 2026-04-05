@@ -568,7 +568,7 @@ components:
                             status:
                                 in:
                                     - COMPLETED
-                                    - ABORTED
+                                    - FAILED
                             stateDate:
                                 gte: '2025-12-01T00:00:00.000Z'
                                 lte: '2025-12-31T23:59:59.999Z'
@@ -1017,7 +1017,7 @@ components:
                     example: EVOLUTION
                 status:
                     type: string
-                    enum: [IN_PROGRESS, COMPLETED, ABORTED]
+                    enum: [IN_PROGRESS, COMPLETED, FAILED]
                     example: COMPLETED
                 numericExpression:
                     type: string
@@ -1074,7 +1074,7 @@ components:
                     enum: [COMPLIANCE, EVOLUTION]
                 status:
                     type: string
-                    enum: [IN_PROGRESS, COMPLETED, ABORTED]
+                    enum: [IN_PROGRESS, COMPLETED, FAILED]
                 numericExpression:
                     type: string
                 comparator:
