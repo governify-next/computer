@@ -15,7 +15,7 @@ export const metrics: Record<string, IMetric> = {
 // This function injects the stringified version of the process function into each metric for documentation purposes
 const injectScriptStringToMetric = (metrics: Record<string, IMetric>): Record<string, IMetric> => {
     Object.values(metrics).forEach((metric) => {
-        metric.script = metric.process.toString();
+        metric.processScript = metric.process.toString();
     });
     return metrics;
 };

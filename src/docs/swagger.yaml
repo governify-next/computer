@@ -765,7 +765,7 @@ components:
                     $ref: '#/components/schemas/MetricConfigSchema'
                 auditConfigSchema:
                     $ref: '#/components/schemas/AuditConfigSchema'
-                script:
+                processScript:
                     type: string
                     example: |
                         async process(_date,_window,_metricConfig,_auditConfig){const evidences=[];return{value:0,evidences}}
