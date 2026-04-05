@@ -13,13 +13,15 @@ export const metrics: Record<string, IMetric> = {
 };
 
 // This function injects the stringified version of the process function into each metric for documentation purposes
-const injectScriptStringToMetric = (metrics: Record<string, IMetric>): Record<string, IMetric> => {
+const injectProcessScriptStringToMetric = (
+    metrics: Record<string, IMetric>,
+): Record<string, IMetric> => {
     Object.values(metrics).forEach((metric) => {
         metric.processScript = metric.process.toString();
     });
     return metrics;
 };
-injectScriptStringToMetric(metrics);
+injectProcessScriptStringToMetric(metrics);
 
 export type MetricName = keyof typeof metrics;
 export const getMetricByName = (name: string): IMetric => {
