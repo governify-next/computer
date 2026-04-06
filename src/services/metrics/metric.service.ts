@@ -7,9 +7,15 @@ import { ValidationError } from '../../utils/customErrors.js';
 import { IProcessedMetric } from '../../models/state.model.js';
 
 import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
+import {
+    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_NUMBER,
+    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_LEVEL,
+} from './implementations/bluejay.metric.js';
 
 export const metrics: Record<string, IMetric> = {
     MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS,
+    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_LEVEL,
+    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_NUMBER,
 };
 
 // This function injects the stringified version of the process function into each metric for documentation purposes

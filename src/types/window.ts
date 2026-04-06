@@ -1,7 +1,18 @@
+export type WindowUnit =
+    | 'millisecond'
+    | 'milisecond'
+    | 'second'
+    | 'minute'
+    | 'hour'
+    | 'day'
+    | 'week';
+
+export interface IWindowPeriod {
+    unit: WindowUnit;
+    value: number;
+}
+
 export interface IWindow {
-    period: {
-        unit: 'milisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week';
-        value: number;
-    };
+    period: IWindowPeriod[];
     anchorDate: Date;
 }
