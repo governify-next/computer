@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-    title: Reporter API
+    title: Computator API
     version: 1.0.0
     description: |
-        REST API for managing metrics and states within Reporter API.
+        REST API for managing metrics and states within Computator API.
 servers:
     - url: /
 

@@ -1,5 +1,5 @@
 {
-    "name": "reporter",
+    "name": "computator",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -25,15 +25,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/governify-next/reporter.git"
+        "url": "git+https://github.com/governify-next/computator.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/governify-next/reporter/issues"
+        "url": "https://github.com/governify-next/computator/issues"
     },
-    "homepage": "https://github.com/governify-next/reporter#readme",
+    "homepage": "https://github.com/governify-next/computator#readme",
     "dependencies": {
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
