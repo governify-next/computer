@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-    title: Computator API
+    title: Computer API
     version: 1.0.0
     description: |
-        REST API for managing metrics and states within Computator API.
+        REST API for managing metrics and states within Computer API.
 servers:
     - url: /
 

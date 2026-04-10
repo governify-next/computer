@@ -1,5 +1,5 @@
 {
-    "name": "computator",
+    "name": "computer",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -25,15 +25,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/governify-next/computator.git"
+        "url": "git+https://github.com/governify-next/computer.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/governify-next/computator/issues"
+        "url": "https://github.com/governify-next/computer/issues"
     },
-    "homepage": "https://github.com/governify-next/computator#readme",
+    "homepage": "https://github.com/governify-next/computer#readme",
     "dependencies": {
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
