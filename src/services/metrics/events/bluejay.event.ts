@@ -12,13 +12,13 @@ export const EV_BLUEJAY_LOGS_BY_NUMBER: IEvent = {
     fetcherConfigSchemas: [
         {
             id: 'FT_REST_BLUEJAY_LOGS',
-            fetcherConfigSchema: z.object({
+            schema: z.object({
                 number: z.number(),
             }),
         },
     ],
     processConfigSchema: z.object({}),
-    async process(_date, _window, _fetcherConfig, _processConfig) {
+    async process(_date, _window, _fetcherConfigs, _processConfig) {
         const evidences: Record<string, unknown>[] = [];
 
         return evidences;
@@ -36,13 +36,13 @@ export const EV_BLUEJAY_LOGS_BY_LEVEL: IEvent = {
     fetcherConfigSchemas: [
         {
             id: 'FT_REST_BLUEJAY_LOGS',
-            fetcherConfigSchema: z.object({
+            schema: z.object({
                 level: z.string(),
             }),
         },
     ],
     processConfigSchema: z.object({}),
-    async process(_date, _window, _fetcherConfig, _processConfig) {
+    async process(_date, _window, _fetcherConfigs, _processConfig) {
         const evidences: Record<string, unknown>[] = [];
 
         return evidences;

@@ -10,7 +10,7 @@ export interface IEvent {
     };
     fetcherConfigSchemas: {
         id: string;
-        fetcherConfigSchema: z.ZodTypeAny;
+        schema: z.ZodTypeAny;
     }[];
     processConfigSchema: z.ZodTypeAny;
     process(

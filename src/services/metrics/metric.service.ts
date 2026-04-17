@@ -43,10 +43,10 @@ export const processMetric = async (
 ): Promise<{ value: number; evidences: Record<string, unknown>[] }> => {
     const event = getEventById(eventType);
     try {
-        for (const fetcherConfigSchema of event.fetcherConfigSchemas) {
+        event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
             const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
-            fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.fetcherConfig);
-        }
+            fetcherConfigSchema.schema.parse(fetcherConfig?.config);
+        });
         event.processConfigSchema.parse(processConfig);
 
         const mainEvents: Record<string, unknown>[] = await event.process(
@@ -122,7 +122,7 @@ export const validateEvent = async (
         try {
             event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
                 const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
-                fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.fetcherConfig);
+                fetcherConfigSchema.schema.parse(fetcherConfig?.config);
             });
         } catch (error) {
             if (error instanceof ZodError) {

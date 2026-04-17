@@ -12,7 +12,7 @@ export const EV_GITHUB_COMMITS: IEvent = {
     fetcherConfigSchemas: [
         {
             id: 'FT_REST_GITHUB_COMMITS',
-            fetcherConfigSchema: z.object({
+            schema: z.object({
                 tag: z.string(),
                 branch: z.string().optional(),
             }),
