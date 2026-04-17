@@ -1,59 +1,74 @@
 import { ZodError } from 'zod';
-import { IMetric } from '../../types/metric.js';
-import { IMetricResult } from '../../types/metricResult.js';
+import { IEvent } from '../../types/event.js';
 import { IWindow } from '../../types/window.js';
-import { IMetricConfig } from '../../types/metricConfig.js';
 import { ValidationError } from '../../utils/customErrors.js';
-import { IProcessedMetric } from '../../models/state.model.js';
 
-import { MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS } from './implementations/github.metric.js';
-import {
-    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_NUMBER,
-    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_LEVEL,
-} from './implementations/bluejay.metric.js';
+import { EV_GITHUB_COMMITS } from './events/github.event.js';
+import { EV_BLUEJAY_LOGS_BY_NUMBER, EV_BLUEJAY_LOGS_BY_LEVEL } from './events/bluejay.event.js';
 
-export const metrics: Record<string, IMetric> = {
-    MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS,
-    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_LEVEL,
-    MT_xx_BLUEJAY_xx_COUNT_LOGS_BY_NUMBER,
+export const events: Record<string, IEvent> = {
+    EV_GITHUB_COMMITS,
+    EV_BLUEJAY_LOGS_BY_LEVEL,
+    EV_BLUEJAY_LOGS_BY_NUMBER,
 };
 
 // This function injects the stringified version of the process function into each metric for documentation purposes
-const injectProcessScriptStringToMetric = (
-    metrics: Record<string, IMetric>,
-): Record<string, IMetric> => {
-    Object.values(metrics).forEach((metric) => {
-        metric.processScript = metric.process.toString();
+const injectProcessScriptStringToEvent = (
+    events: Record<string, IEvent>,
+): Record<string, IEvent> => {
+    Object.values(events).forEach((event) => {
+        event.processScript = event.process.toString();
     });
-    return metrics;
+    return events;
 };
-injectProcessScriptStringToMetric(metrics);
+injectProcessScriptStringToEvent(events);
 
-export type MetricName = keyof typeof metrics;
-export const getMetricByName = (name: string): IMetric => {
-    const metric = metrics[name as MetricName];
-    return metric;
+export type EventId = keyof typeof events;
+export const getEventById = (name: string): IEvent => {
+    const event = events[name as EventId];
+    return event;
 };
 
-export const getMetrics = (): IMetric[] => {
-    return Object.values(metrics);
+export const getEvents = (): IEvent[] => {
+    return Object.values(events);
 };
 
 export const processMetric = async (
-    metricName: string,
     date: Date,
     window: IWindow,
-    metricConfig: Record<string, unknown>,
-    auditConfig: Record<string, unknown>,
-): Promise<IMetricResult> => {
-    const metric = getMetricByName(metricName);
+    eventType: string,
+    fetcherConfigs: Record<string, unknown>[],
+    processConfig: Record<string, unknown>,
+    aggregation: Record<string, unknown>,
+): Promise<{ value: number; evidences: Record<string, unknown>[] }> => {
+    const event = getEventById(eventType);
     try {
-        metric.metricConfigSchema.parse(metricConfig);
-        metric.auditConfigSchema.parse(auditConfig);
-        return await metric.process(date, window, metricConfig, auditConfig);
+        for (const fetcherConfigSchema of event.fetcherConfigSchemas) {
+            const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
+            fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.fetcherConfig);
+        }
+        event.processConfigSchema.parse(processConfig);
+
+        const mainEvents: Record<string, unknown>[] = await event.process(
+            date,
+            window,
+            fetcherConfigs,
+            processConfig,
+        );
+
+        // value calculation logic
+        let value: number = 0;
+        let evidences: Record<string, unknown>[] = [];
+
+        if (aggregation.operation === 'count') {
+            value = mainEvents.length;
+            evidences = mainEvents;
+        }
+
+        return { value, evidences };
     } catch (error) {
         if (error instanceof ZodError) {
-            throw new ValidationError('Invalid metric or audit configuration', {
+            throw new ValidationError('Invalid fetcher or process configuration', {
                 issues: error.issues,
             });
         }
@@ -61,7 +76,7 @@ export const processMetric = async (
     }
 };
 
-export const processMetrics = async (
+/*export const processMetrics = async (
     metricConfigs: IMetricConfig[],
     date: Date,
     window: IWindow,
@@ -79,7 +94,7 @@ export const processMetrics = async (
         );
         processedMetrics[metricName] = {
             name: metricName,
-            fetcher: getMetricByName(metricName).fetcher,
+            fetcher: getEventById(metricName).fetcher,
             fetchResultIds: [],
             metricConfig: metricConfig.metricConfig,
             value: processedMetric.value,
@@ -87,60 +102,63 @@ export const processMetrics = async (
         };
     }
     return processedMetrics;
-};
+};*/
 
-export const validateMetric = async (
-    metricName: string,
-    metricConfig: Record<string, unknown>,
-    auditConfig: Record<string, unknown>,
-): Promise<MetricValidationResponse> => {
-    const metric = getMetricByName(metricName);
-    if (!metric) {
+export const validateEvent = async (
+    eventId: string,
+    fetcherConfigs: Record<string, unknown>[],
+    processConfig: Record<string, unknown>,
+): Promise<EventValidationResponse> => {
+    const event = getEventById(eventId);
+    if (!event) {
         return {
             valid: false,
-            error: `Metric "${metricName}" not found`,
+            error: `Event "${eventId}" not found`,
         };
     }
-    let metricIssues: ZodError['issues'] = [];
-    let auditIssues: ZodError['issues'] = [];
-    if (metricConfig) {
+    let fetcherConfigIssues: ZodError['issues'] = [];
+    let processConfigIssues: ZodError['issues'] = [];
+    if (fetcherConfigs) {
         try {
-            metric.metricConfigSchema.parse(metricConfig);
+            event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
+                const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
+                fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.fetcherConfig);
+            });
         } catch (error) {
             if (error instanceof ZodError) {
-                metricIssues = error.issues;
+                fetcherConfigIssues = error.issues;
             } else {
                 throw error;
             }
         }
     }
-    if (auditConfig) {
+    if (processConfig) {
         try {
-            metric.auditConfigSchema.parse(auditConfig);
+            event.processConfigSchema.parse(processConfig);
         } catch (error) {
             if (error instanceof ZodError) {
-                auditIssues = error.issues;
+                processConfigIssues = error.issues;
             } else {
                 throw error;
             }
         }
     }
-    if (metricIssues.length || auditIssues.length) {
+    if (fetcherConfigIssues.length || processConfigIssues.length) {
         let errorMessage = '';
 
-        if (metricIssues.length && auditIssues.length) {
-            errorMessage = 'Invalid metricConfig and auditConfig';
-        } else if (metricIssues.length) {
-            errorMessage = 'Invalid metricConfig';
+        if (fetcherConfigIssues.length && processConfigIssues.length) {
+            errorMessage = 'Invalid fetcherConfig and processConfig';
+        } else if (fetcherConfigIssues.length) {
+            errorMessage = 'Invalid fetcherConfig';
         } else {
-            errorMessage = 'Invalid auditConfig';
+            errorMessage = 'Invalid processConfig';
         }
         return {
             valid: false,
             error: errorMessage,
             issues: [
-                ...metricIssues.map((i) => ({ ...i, source: 'metricConfig' })),
-                ...auditIssues.map((i) => ({ ...i, source: 'auditConfig' })),
+                ...fetcherConfigIssues.map((i) => ({ ...i, source: 'fetcherConfig' })),
+                ...processConfigIssues.map((i) => ({ ...i, source: 'processConfig' })),
             ],
         };
     }
@@ -148,6 +166,6 @@ export const validateMetric = async (
     return { valid: true };
 };
 
-type MetricValidationResponse =
+type EventValidationResponse =
     | { valid: true }
     | { valid: false; error: string; issues?: ZodError['issues'] };

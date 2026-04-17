@@ -1,6 +1,6 @@
 import { IWindowPeriod, WindowUnit } from '../../../types/window.js';
 
-export const getPeriodStartDateFromAnchorAndPeriod = (
+export const getPeriodStartDateFromAnchorDateAndPeriod = (
     date: Date,
     anchorDate: Date,
     period: IWindowPeriod[],

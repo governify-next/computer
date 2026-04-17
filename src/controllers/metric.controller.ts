@@ -4,15 +4,15 @@ import * as metricService from '../services/metrics/metric.service.js';
 
 export const processMetric = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { metricName } = req.params;
-        const { date, window, metricConfig, auditConfig } = req.body;
+        const { date, window, events, aggregation } = req.body;
 
         const result = await metricService.processMetric(
-            metricName,
             date,
             window,
-            metricConfig,
-            auditConfig,
+            events.type,
+            events.fetcherConfigs,
+            events.processConfig,
+            aggregation,
         );
         return sendSuccess(res, { data: result, message: 'Metric processed' });
     } catch (err) {
@@ -22,7 +22,7 @@ export const processMetric = async (req: Request, res: Response, next: NextFunct
 
 export const getMetrics = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const metrics = await metricService.getMetrics();
+        const metrics = await metricService.getEvents();
         return sendSuccess(res, { data: metrics, message: 'Metrics retrieved' });
     } catch (err) {
         next(err);
@@ -32,7 +32,7 @@ export const getMetrics = async (req: Request, res: Response, next: NextFunction
 export const getMetricByName = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { metricName } = req.params;
-        const metric = await metricService.getMetricByName(metricName);
+        const metric = await metricService.getEventById(metricName);
         return sendSuccess(res, { data: metric, message: 'Metric retrieved' });
     } catch (err) {
         next(err);
@@ -42,9 +42,9 @@ export const getMetricByName = async (req: Request, res: Response, next: NextFun
 export const validateMetric = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { metricName } = req.params;
-        const { metricConfig, auditConfig } = req.body;
+        const { fetcherConfigs, processConfig } = req.body;
 
-        const result = await metricService.validateMetric(metricName, metricConfig, auditConfig);
+        const result = await metricService.validateEvent(metricName, fetcherConfigs, processConfig);
         if (!result.valid) {
             return sendSuccess(res, {
                 data: result,

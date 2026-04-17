@@ -10,12 +10,7 @@ export const metricRoutes = Router();
 
 metricRoutes.get('/metrics', metricController.getMetrics);
 metricRoutes.get('/metrics/:metricName', validateMetricName, metricController.getMetricByName);
-metricRoutes.post(
-    '/metrics/:metricName/process',
-    validateMetricName,
-    validateProcessMetricValidation,
-    metricController.processMetric,
-);
+metricRoutes.post('/metrics/process', metricController.processMetric);
 metricRoutes.post(
     '/metrics/:metricName/validate',
     validateMetricValidation,

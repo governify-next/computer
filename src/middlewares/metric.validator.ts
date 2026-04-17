@@ -14,7 +14,7 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
 export const validateMetricName = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { metricName } = req.params;
-        const metric = metricService.getMetricByName(metricName);
+        const metric = metricService.getEventById(metricName);
         if (!metric) {
             return next(new NotFoundError(`Metric ${metricName} not found`));
         }

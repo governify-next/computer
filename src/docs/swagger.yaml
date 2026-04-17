@@ -434,7 +434,7 @@ components:
             description: Name of the metric
             schema:
                 type: string
-                example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                example: EV_GITHUB_COMMITS
         stateId:
             name: id
             in: path
@@ -498,7 +498,7 @@ components:
                             repository: governify-next
                         guarantee:
                             name: PR lead time under 72h
-                            numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                            numericExpression: 'EV_GITHUB_COMMITS'
                             comparator: '>='
                             threshold: 10
                             window:
@@ -507,7 +507,7 @@ components:
                                     - unit: day
                                       value: 7
                             metricConfigs:
-                                - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                                - name: EV_GITHUB_COMMITS
                                   metricConfig:
                                       tag: feat
         GenerateStatesBody:
@@ -525,7 +525,7 @@ components:
                                   repository: governify-next
                               guarantee:
                                   name: PR lead time under 72h
-                                  numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                                  numericExpression: 'EV_GITHUB_COMMITS'
                                   comparator: '>='
                                   threshold: 10
                                   window:
@@ -534,7 +534,7 @@ components:
                                           - unit: day
                                             value: 7
                                   metricConfigs:
-                                      - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                                      - name: EV_GITHUB_COMMITS
                                         metricConfig:
                                             tag: feat
                             - signatureId: 67c9ff7b2ddf1b3940f9f222
@@ -543,7 +543,7 @@ components:
                                   repository: governify-next
                               guarantee:
                                   name: PR lead time under 72h
-                                  numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                                  numericExpression: 'EV_GITHUB_COMMITS'
                                   comparator: '>='
                                   threshold: 15
                                   window:
@@ -552,7 +552,7 @@ components:
                                           - unit: day
                                             value: 14
                                   metricConfigs:
-                                      - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                                      - name: EV_GITHUB_COMMITS
                                         metricConfig:
                                             tag: chore
         SearchStatesBody:
@@ -589,7 +589,7 @@ components:
                         indeterminate: false
                         threshold: 12
                         comparator: '>='
-                        numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                        numericExpression: 'EV_GITHUB_COMMITS'
                         auditConfig:
                             owner: johndoe
                             repository: governify-next
@@ -754,7 +754,7 @@ components:
             properties:
                 name:
                     type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                    example: EV_GITHUB_COMMITS
                 description:
                     type: string
                     example: Counts the number of commits in a GitHub repository
@@ -805,7 +805,7 @@ components:
             properties:
                 name:
                     type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                    example: EV_GITHUB_COMMITS
                 metricConfig:
                     $ref: '#/components/schemas/MetricConfig'
             required:
@@ -821,7 +821,7 @@ components:
                     example: PR lead time under 72h
                 numericExpression:
                     type: string
-                    example: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                    example: 'EV_GITHUB_COMMITS'
                 comparator:
                     type: string
                     example: '>='
@@ -958,7 +958,7 @@ components:
             properties:
                 name:
                     type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
+                    example: EV_GITHUB_COMMITS
                 fetcher:
                     type: string
                     example: FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS
@@ -1021,7 +1021,7 @@ components:
                     example: COMPLETED
                 numericExpression:
                     type: string
-                    example: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
+                    example: 'EV_GITHUB_COMMITS'
                 comparator:
                     type: string
                     example: '>='
