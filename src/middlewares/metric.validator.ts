@@ -1,7 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
-import { NotFoundError, ValidationError } from '../utils/customErrors.js';
-import * as metricService from '../services/metrics/metric.service.js';
+import { ValidationError } from '../utils/customErrors.js';
+import * as eventService from '../services/events/event.service.js';
 
 // ─── Express-validator ─────────────────────────────
 
@@ -10,41 +10,6 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
     if (!errors.isEmpty()) return next(new ValidationError('Validation failed', errors.array()));
     next();
 };
-
-export const validateMetricName = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { metricName } = req.params;
-        const metric = metricService.getEventById(metricName);
-        if (!metric) {
-            return next(new NotFoundError(`Metric ${metricName} not found`));
-        }
-        next();
-    } catch (err) {
-        next(err);
-    }
-};
-
-const metricConfigOptionalValidation = body('metricConfig')
-    .optional()
-    .isObject()
-    .withMessage('metricConfig must be an object');
-
-const metricConfigRequiredValidation = body('metricConfig')
-    .exists({ checkNull: true })
-    .withMessage('metricConfig is required')
-    .isObject()
-    .withMessage('metricConfig must be an object');
-
-const auditConfigOptionalValidation = body('auditConfig')
-    .optional()
-    .isObject()
-    .withMessage('auditConfig must be an object');
-
-const auditConfigRequiredValidation = body('auditConfig')
-    .exists({ checkNull: true })
-    .withMessage('auditConfig is required')
-    .isObject()
-    .withMessage('auditConfig must be an object');
 
 const dateValidation = body('date')
     .exists({ checkNull: true })
@@ -83,16 +48,63 @@ const windowValidation = [
         .withMessage('Period value must be a positive integer strictly greater than 0'),
 ];
 
-export const validateMetricValidation = [
-    metricConfigOptionalValidation,
-    auditConfigOptionalValidation,
-    collectValidationErrors,
+const eventsValidation = [
+    body('events')
+        .exists({ checkNull: true })
+        .withMessage('events is required')
+        .isObject()
+        .withMessage('events must be an object'),
+    body('events.type')
+        .exists({ checkNull: true })
+        .withMessage('events.type is required')
+        .isString()
+        .withMessage('events.type must be a string')
+        .custom((eventType) => {
+            const event = eventService.getEventById(eventType as string);
+            if (!event) {
+                throw new Error(`Event ${eventType as string} not found`);
+            }
+            return true;
+        }),
+    body('events.fetcherConfigs')
+        .exists({ checkNull: true })
+        .withMessage('events.fetcherConfigs is required')
+        .isArray({ min: 1 })
+        .withMessage('events.fetcherConfigs must be an array with at least one entry'),
+    body('events.fetcherConfigs.*.id')
+        .exists({ checkNull: true })
+        .withMessage('events.fetcherConfigs.*.id is required')
+        .isString()
+        .withMessage('events.fetcherConfigs.*.id must be a string'),
+    body('events.fetcherConfigs.*.config')
+        .exists({ checkNull: true })
+        .withMessage('events.fetcherConfigs.*.config is required')
+        .isObject()
+        .withMessage('events.fetcherConfigs.*.config must be an object'),
+    body('events.processConfig')
+        .exists({ checkNull: true })
+        .withMessage('events.processConfig is required')
+        .isObject()
+        .withMessage('events.processConfig must be an object'),
+];
+
+const aggregationValidation = [
+    body('aggregation')
+        .exists({ checkNull: true })
+        .withMessage('aggregation is required')
+        .isObject()
+        .withMessage('aggregation must be an object'),
+    body('aggregation.operation')
+        .exists({ checkNull: true })
+        .withMessage('aggregation.operation is required')
+        .isIn(['count'])
+        .withMessage('aggregation.operation must be one of: count'),
 ];
 
 export const validateProcessMetricValidation = [
-    metricConfigRequiredValidation,
-    auditConfigRequiredValidation,
     dateValidation,
     ...windowValidation,
+    ...eventsValidation,
+    ...aggregationValidation,
     collectValidationErrors,
 ];

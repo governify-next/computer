@@ -1,5 +1,5 @@
 import * as stateRepository from '../repositories/state.repository.js';
-import * as metricService from './metrics/metric.service.js';
+import * as metricService from './metric.service.js';
 import * as evaluatorService from './evaluator.service.js';
 import { IState } from '../models/state.model.js';
 import { Types } from 'mongoose';
