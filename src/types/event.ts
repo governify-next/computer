@@ -10,8 +10,8 @@ export interface IEvent {
         example: string;
     };
     fetcherConfigSchemas: {
-        id: string;
-        schema: z.ZodTypeAny;
+        fetcherId: string;
+        fetcherConfigSchema: z.ZodTypeAny;
     }[];
     processConfigSchema: z.ZodTypeAny;
     process(

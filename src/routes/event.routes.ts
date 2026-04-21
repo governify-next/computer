@@ -1,14 +1,25 @@
 import { Router } from 'express';
 import * as eventController from '../controllers/event.controller.js';
-import { validateEventId, validateEventValidation } from '../middlewares/event.validator.js';
+import {
+    validateEventId,
+    validateProcessEventBody,
+    validateFetcherConfigs,
+    validateEventValidation,
+} from '../middlewares/event.validator.js';
 
 export const eventRoutes = Router();
 
 eventRoutes.get('/events', eventController.getEvents);
 eventRoutes.get('/events/:eventId', validateEventId, eventController.getEventById);
 eventRoutes.post(
-    '/events/:eventId/validate',
+    '/events/:eventId/process',
     validateEventId,
+    validateProcessEventBody,
+    validateFetcherConfigs,
+    eventController.processEvent,
+);
+eventRoutes.post(
+    '/events/:eventId/validate',
     validateEventValidation,
     eventController.validateEvent,
 );

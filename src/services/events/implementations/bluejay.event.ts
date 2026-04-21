@@ -11,8 +11,8 @@ export const EV_BLUEJAY_LOGS_BY_NUMBER: IEvent = {
     },
     fetcherConfigSchemas: [
         {
-            id: 'numberToSearch',
-            schema: z.object({
+            fetcherId: 'numberToSearch',
+            fetcherConfigSchema: z.object({
                 number: z.number(),
             }),
         },
@@ -35,8 +35,8 @@ export const EV_BLUEJAY_LOGS_BY_LEVEL: IEvent = {
     },
     fetcherConfigSchemas: [
         {
-            id: 'levelToSearch',
-            schema: z.object({
+            fetcherId: 'levelToSearch',
+            fetcherConfigSchema: z.object({
                 level: z.string().refine((value) => ['INFO', 'WARN', 'ERROR'].includes(value)),
             }),
         },

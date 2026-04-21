@@ -1,4 +1,4 @@
-export interface IProcessedMetric {
+export interface IComputedMetric {
     value: number | null;
     evidences: Record<string, unknown>[];
     metricConfig: {

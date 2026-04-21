@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
-import * as fetcherUtils from '../../utils/fetcher.util.js';
+import * as fetcherUtils from '../utils/fetcher.util.js';
 
 export const EV_GITHUB_COMMITS: IEvent = {
     id: 'EV_GITHUB_COMMITS',
@@ -13,8 +13,8 @@ export const EV_GITHUB_COMMITS: IEvent = {
     },
     fetcherConfigSchemas: [
         {
-            id: 'FT_REST_GITHUB_COMMITS',
-            schema: z.object({
+            fetcherId: 'FT_REST_GITHUB_COMMITS',
+            fetcherConfigSchema: z.object({
                 tag: z.string(),
                 branch: z.string().optional(),
             }),

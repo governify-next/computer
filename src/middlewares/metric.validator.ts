@@ -11,43 +11,6 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
     next();
 };
 
-const dateValidation = body('date')
-    .exists({ checkNull: true })
-    .withMessage('date is required')
-    .isISO8601()
-    .withMessage('date must be a valid ISO 8601 date string');
-
-const windowValidation = [
-    body('window')
-        .exists({ checkNull: true })
-        .withMessage('window is required')
-        .isObject()
-        .withMessage('window must be an object'),
-    body('window.anchorDate')
-        .exists({ checkNull: true })
-        .withMessage('window.anchorDate is required')
-        .isISO8601()
-        .withMessage('window.anchorDate must be a valid ISO 8601 date string')
-        .isAfter('2000-01-01T00:00:00.000Z')
-        .isBefore('2100-01-01T00:00:00.000Z')
-        .withMessage('window.anchorDate must be between 2000-01-01 and 2100-01-01'),
-    body('window.period')
-        .exists({ checkNull: true })
-        .withMessage('window.period is required')
-        .isArray({ min: 1 })
-        .withMessage('window.period must be an array with at least one entry'),
-    body('window.period.*.unit')
-        .exists({ checkNull: true })
-        .withMessage('window.period.*.unit is required')
-        .isIn(['millisecond', 'second', 'minute', 'hour', 'day', 'week'])
-        .withMessage('Period unit must be one of: millisecond, second, minute, hour, day, week'),
-    body('window.period.*.value')
-        .exists({ checkNull: true })
-        .withMessage('window.period.*.value is required')
-        .isInt({ min: 1 })
-        .withMessage('Period value must be a positive integer strictly greater than 0'),
-];
-
 const eventsValidation = [
     body('events')
         .exists({ checkNull: true })
@@ -101,9 +64,7 @@ const aggregationValidation = [
         .withMessage('aggregation.type must be one of: count'),
 ];
 
-export const validateProcessMetricValidation = [
-    dateValidation,
-    ...windowValidation,
+export const validateComputeMetricValidation = [
     ...eventsValidation,
     ...aggregationValidation,
     collectValidationErrors,

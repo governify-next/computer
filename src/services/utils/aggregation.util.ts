@@ -7,7 +7,6 @@ export const aggregateMainEvents = (
 ): IAggregationResult => {
     const selectedAggregation = aggregations[aggregation.type];
     const value = selectedAggregation(mainEvents);
-
     return {
         value,
         evidences: mainEvents,

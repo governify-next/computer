@@ -1,5 +1,10 @@
-import { IEvent } from '../../types/event.js';
 import { ZodError } from 'zod';
+import { IEvent } from '../../types/event.js';
+import { IWindow } from '../../types/window.js';
+import { IFetch } from '../../types/fetch.js';
+import { IFetcherConfig } from '../../types/fetcherConfig.js';
+import { IProcessedEvent } from '../../types/processedEvent.js';
+import * as fetcherUtils from './utils/fetcher.util.js';
 
 import { EV_GITHUB_COMMITS } from './implementations/github.event.js';
 import {
@@ -25,13 +30,38 @@ const injectProcessScriptStringToEvent = (
 injectProcessScriptStringToEvent(events);
 
 export type EventId = keyof typeof events;
-export const getEventById = (name: string): IEvent => {
-    const event = events[name as EventId];
+export const getEventById = (eventId: string): IEvent => {
+    const event = events[eventId as EventId];
     return event;
 };
 
 export const getEvents = (): IEvent[] => {
     return Object.values(events);
+};
+
+export const processEvent = async (
+    eventId: string,
+    date: Date,
+    window: IWindow,
+    fetcherConfigs: IFetcherConfig[],
+    processConfig: Record<string, unknown>,
+): Promise<IProcessedEvent> => {
+    // Step 1: Fetch raw data for the process event using the provided fetcher configurations
+    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
+
+    // Step 2: Process the fetched data using the event's process function to compute the events
+    const event = getEventById(eventId);
+    const events = event.process(date, window, fetchs, processConfig);
+
+    // Step 3: Return the computed events along with the fetch results for evidence
+    return {
+        events,
+        eventId,
+        date,
+        window,
+        fetchs,
+        processConfig,
+    };
 };
 
 export const validateEvent = async (
@@ -51,8 +81,10 @@ export const validateEvent = async (
     if (fetcherConfigs) {
         try {
             event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
-                const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
-                fetcherConfigSchema.schema.parse(fetcherConfig?.config);
+                const fetcherConfig = fetcherConfigs.find(
+                    (fc) => fc.fetcherId === fetcherConfigSchema.fetcherId,
+                );
+                fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.config);
             });
         } catch (error) {
             if (error instanceof ZodError) {

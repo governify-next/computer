@@ -21,6 +21,40 @@ export const getEventById = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
+export const processEvent = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { eventId } = req.params;
+        const { date, window, fetcherConfigs, processConfig } = req.body;
+
+        const result = await eventService.processEvent(
+            eventId,
+            date,
+            window,
+            fetcherConfigs,
+            processConfig,
+        );
+
+        const expand = req.query.expand === 'true';
+        if (expand) {
+            return sendSuccess(res, { data: result, message: 'Event processed' });
+        } else {
+            const fetchs = result.fetchs.map((fetch) => {
+                const { data, ...rest } = fetch;
+                return rest;
+            });
+            return sendSuccess(res, {
+                data: {
+                    ...result,
+                    fetchs,
+                },
+                message: 'Event processed',
+            });
+        }
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const validateEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { eventId } = req.params;
@@ -31,11 +65,9 @@ export const validateEvent = async (req: Request, res: Response, next: NextFunct
             return sendSuccess(res, {
                 data: result,
                 message: 'Event validation failed',
-                httpStatus: 400,
-                appCode: 'VALIDATION_ERROR',
             });
         }
-        return sendSuccess(res, { data: result, message: 'Event validated' });
+        return sendSuccess(res, { data: result, message: 'Event validation passed' });
     } catch (err) {
         next(err);
     }

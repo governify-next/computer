@@ -1,36 +1,39 @@
 import { IWindow } from '../types/window.js';
 import { IFetcherConfig } from '../types/fetcherConfig.js';
 import { IFetch } from '../types/fetch.js';
-import { IEvent } from '../types/event.js';
 import { IAggregationResult } from '../types/aggregationResult.js';
 import { IAggregation } from '../types/aggregationConfig.js';
-import { IProcessedMetric } from '../types/processedMetric.js';
-import * as fetcherUtils from './utils/fetcher.util.js';
+import { IComputedMetric } from '../types/computedMetric.js';
+import { IProcessedEvent } from '../types/processedEvent.js';
 import * as aggregationUtils from './utils/aggregation.util.js';
 import * as eventService from './events/event.service.js';
 
-export const processMetric = async (
+export const computeMetric = async (
     date: Date,
     window: IWindow,
     eventId: string,
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
     aggregation: IAggregation,
-): Promise<IProcessedMetric> => {
-    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
-
-    const event: IEvent = eventService.getEventById(eventId);
-    const mainEvents: Record<string, unknown>[] = event.process(
+): Promise<IComputedMetric> => {
+    // Step 1: Process the event to get the main events
+    const events: IProcessedEvent = await eventService.processEvent(
+        eventId,
         date,
         window,
-        fetchs,
+        fetcherConfigs,
         processConfig,
     );
+    const mainEvents: Record<string, unknown>[] = events.events;
+    const fetchs: IFetch[] = events.fetchs;
 
+    // Step 2: Aggregate the main events using the specified aggregation method to compute the final metric value
     const aggregationResult: IAggregationResult = aggregationUtils.aggregateMainEvents(
         mainEvents,
         aggregation,
     );
+
+    // Step 3: Return the computed metric value along with evidences and the metric configuration
     return {
         value: aggregationResult.value,
         evidences: aggregationResult.evidences,

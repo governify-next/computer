@@ -1,6 +1,6 @@
-import { IFetch } from '../../types/fetch.js';
-import { IFetcherConfig } from '../../types/fetcherConfig.js';
-import { bootEnv } from '../../config/bootConfig.js';
+import { IFetch } from '../../../types/fetch.js';
+import { IFetcherConfig } from '../../../types/fetcherConfig.js';
+import { bootEnv } from '../../../config/bootConfig.js';
 
 export const fetchDataForEvent = async (
     date: Date,
