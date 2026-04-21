@@ -8,12 +8,9 @@ servers:
     - url: /
 
 tags:
-    - name: Health
-      description: Server health check
-    - name: Events
-      description: Event catalog, processing and validation
-    - name: Metrics
-      description: Metric computation
+    - { name: Health, description: Server health check }
+    - { name: Events, description: Event catalog, processing and validation }
+    - { name: Metrics, description: Metric computation }
 
 paths:
     # ──────────────────────────────────────────────
@@ -43,6 +40,8 @@ paths:
             summary: Get all events
             operationId: getEvents
             description: Returns all available event definitions.
+            security:
+                - BearerAuth: []
             responses:
                 '200':
                     description: Events retrieved successfully.
@@ -57,6 +56,8 @@ paths:
                                               type: array
                                               items:
                                                   $ref: '#/components/schemas/Event'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '500':
                     $ref: '#/components/responses/InternalError'
 
@@ -69,6 +70,8 @@ paths:
             summary: Get event by id
             operationId: getEventById
             description: Returns one event definition by id.
+            security:
+                - BearerAuth: []
             responses:
                 '200':
                     description: Event retrieved successfully.
@@ -81,6 +84,8 @@ paths:
                                       properties:
                                           data:
                                               $ref: '#/components/schemas/Event'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '404':
                     $ref: '#/components/responses/NotFound'
                 '500':
@@ -96,6 +101,8 @@ paths:
             summary: Process an event
             operationId: processEvent
             description: Processes an event for a date and window using the provided fetcher and process configs.
+            security:
+                - BearerAuth: []
             requestBody:
                 $ref: '#/components/requestBodies/ProcessEventBody'
             responses:
@@ -112,6 +119,8 @@ paths:
                                               oneOf:
                                                   - $ref: '#/components/schemas/ProcessedEventSummary'
                                                   - $ref: '#/components/schemas/ProcessedEventDetailed'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '404':
@@ -128,6 +137,8 @@ paths:
             summary: Validate event configuration
             operationId: validateEvent
             description: Validates optional fetcher configs and process config for the selected event.
+            security:
+                - BearerAuth: []
             requestBody:
                 $ref: '#/components/requestBodies/ValidateEventBody'
             responses:
@@ -142,6 +153,8 @@ paths:
                                       properties:
                                           data:
                                               $ref: '#/components/schemas/EventValidationResult'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '500':
@@ -157,6 +170,8 @@ paths:
             summary: Compute metric
             operationId: computeMetric
             description: Processes an event and applies aggregation to compute a metric value.
+            security:
+                - BearerAuth: []
             requestBody:
                 $ref: '#/components/requestBodies/ComputeMetricBody'
             responses:
@@ -171,6 +186,8 @@ paths:
                                       properties:
                                           data:
                                               $ref: '#/components/schemas/ComputedMetric'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '404':
@@ -179,6 +196,12 @@ paths:
                     $ref: '#/components/responses/InternalError'
 
 components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: JWT token required when AUTHENTICATION_ENABLED=true.
     # ── Parameters ────────────────────────────
     parameters:
         eventId:
@@ -225,6 +248,35 @@ components:
 
     # ── Responses ─────────────────────────────
     responses:
+        Unauthorized:
+            description: Missing, malformed, invalid or expired bearer token.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    examples:
+                        missingOrMalformed:
+                            summary: Missing or malformed Authorization header
+                            value:
+                                success: false
+                                message: Authorization header missing or malformed
+                                httpStatus: 401
+                                appCode: UNAUTHORIZED
+                                data: null
+                                error:
+                                    message: Authorization header missing or malformed
+                                    details: null
+                        invalidOrExpired:
+                            summary: Invalid or expired token
+                            value:
+                                success: false
+                                message: Invalid or expired token
+                                httpStatus: 401
+                                appCode: UNAUTHORIZED
+                                data: null
+                                error:
+                                    message: Invalid or expired token
+                                    details: null
         ValidationError:
             description: Validation error.
             content:
