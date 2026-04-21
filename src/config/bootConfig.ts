@@ -12,6 +12,9 @@ export const bootEnv = {
     GOV_SERVICE_NAME: process.env.GOV_SERVICE_NAME || 'computer',
     PORT: process.env.PORT || '5901',
 
+    // Internal service URLs
+    COLLECTOR_SERVICE_URL: process.env.COLLECTOR_SERVICE_URL || 'http://localhost:5902',
+
     // Database URIs
     MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/governify',
     REDIS_URI: process.env.REDIS_URI || 'redis://localhost:6379',
