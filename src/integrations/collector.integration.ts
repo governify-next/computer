@@ -1,6 +1,11 @@
+import jwt from 'jsonwebtoken';
 import { bootEnv } from '../config/bootConfig.js';
 
 const collectorServiceUrl = bootEnv.COLLECTOR_SERVICE_URL;
+const collectorAuthToken = jwt.sign(
+    { service: bootEnv.GOV_SERVICE_NAME, type: 'service-token' },
+    bootEnv.JWT_SECRET,
+);
 
 export const validateFetcher = async (
     fetcherId: string,
@@ -10,6 +15,7 @@ export const validateFetcher = async (
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${collectorAuthToken}`,
         },
         body: JSON.stringify({
             fetcherConfig: fetcherConfig,
@@ -30,6 +36,7 @@ export const generateFetchResult = async (
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${collectorAuthToken}`,
             },
             body: JSON.stringify({
                 date,
