@@ -18,7 +18,7 @@ export const events: Record<string, IEvent> = {
     EV_BLUEJAY_LOGS_BY_NUMBER,
 };
 
-// This function injects the stringified version of the process function into each metric for documentation purposes
+// This function injects the stringified version of the process function into each event for documentation purposes
 const injectProcessScriptStringToEvent = (
     events: Record<string, IEvent>,
 ): Record<string, IEvent> => {
@@ -46,7 +46,7 @@ export const processEvent = async (
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
 ): Promise<IProcessedEvent> => {
-    // Step 1: Fetch raw data for the process event using the provided fetcher configurations
+    // Step 1: Fetch raw data from collector using the provided fetcher configurations
     const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
 
     // Step 2: Process the fetched data using the event's process function to compute the events

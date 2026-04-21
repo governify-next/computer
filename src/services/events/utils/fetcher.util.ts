@@ -33,7 +33,7 @@ export const fetchDataForEvent = async (
     return fetchs;
 };
 
-export const getFetchByFetcherId = (fetchs: IFetch[], fetcherId: string): IFetch => {
+export const getFetchByFetcherId = (fetcherId: string, fetchs: IFetch[]): IFetch => {
     const fetch = fetchs.find((f) => f.fetcherId === fetcherId)!;
     return fetch;
 };

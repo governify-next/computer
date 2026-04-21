@@ -26,8 +26,8 @@ export const EV_GITHUB_COMMITS: IEvent = {
     }),
     process(_date, _window, _fetchs, _processConfig): Record<string, unknown>[] {
         const commitsFetch: IFetch = fetcherUtils.getFetchByFetcherId(
-            _fetchs,
             'FT_REST_GITHUB_COMMITS',
+            _fetchs,
         );
 
         return commitsFetch.data as Record<string, unknown>[];
