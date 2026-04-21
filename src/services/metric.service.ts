@@ -9,23 +9,23 @@ import * as aggregationUtils from './utils/aggregation.util.js';
 import * as eventService from './events/event.service.js';
 
 export const computeMetric = async (
+    eventId: string,
     date: Date,
     window: IWindow,
-    eventId: string,
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
     aggregation: IAggregation,
 ): Promise<IComputedMetric> => {
     // Step 1: Process the event to get the main events
-    const events: IProcessedEvent = await eventService.processEvent(
+    const processedEvent: IProcessedEvent = await eventService.processEvent(
         eventId,
         date,
         window,
         fetcherConfigs,
         processConfig,
     );
-    const mainEvents: Record<string, unknown>[] = events.events;
-    const fetchs: IFetch[] = events.fetchs;
+    const mainEvents: Record<string, unknown>[] = processedEvent.events;
+    const fetchs: IFetch[] = processedEvent.fetchs;
 
     // Step 2: Aggregate the main events using the specified aggregation method to compute the final metric value
     const aggregationResult: IAggregationResult = aggregationUtils.aggregateMainEvents(
