@@ -11,15 +11,7 @@ export const EV_GITHUB_COMMITS: IEvent = {
         example:
             'If the team made 50 commits to the repository in the last month, the metric value would be 50.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_REST_GITHUB_COMMITS',
-            fetcherConfigSchema: z.object({
-                tag: z.string(),
-                branch: z.string().optional(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_REST_GITHUB_COMMITS'],
     processConfigSchema: z.object({
         owner: z.string(),
         repository: z.string(),

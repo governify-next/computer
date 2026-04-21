@@ -2,9 +2,9 @@ import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
 import { NotFoundError, ValidationError } from '../utils/customErrors.js';
 import * as eventService from '../services/events/event.service.js';
+import * as collectorIntegration from '../integrations/collector.integration.js';
 
 // ─── Express-validator ─────────────────────────────
-
 const collectValidationErrors = (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return next(new ValidationError('Validation failed', errors.array()));
@@ -85,9 +85,55 @@ const processConfigValidation = body('processConfig')
     .isObject()
     .withMessage('processConfig must be an object');
 
+export const validateProvidedFetcherConfigs = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        const eventId = req.params.eventId;
+        const { fetcherConfigs } = req.body;
+        const event = eventService.getEventById(eventId);
+        for (const fetcherId of event.fetcherIds) {
+            const fetcherConfig = fetcherConfigs.find(
+                (fc: { fetcherId: string }) => fc.fetcherId === fetcherId,
+            );
+            if (!fetcherConfig) {
+                return next(new ValidationError(`Fetcher config for ${fetcherId} is required`));
+            }
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const validateFetcherConfigs = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // TODO: Implement validation logic for fetcherConfigs against collector API validation endpoint
+        // Validation logic for fetcherConfigs against collector API validation endpoint
+        const { fetcherConfigs } = req.body;
+        const issues: Record<string, unknown>[] = [];
+        for (const fetcherConfig of fetcherConfigs) {
+            const data = await collectorIntegration.validateFetcher(
+                fetcherConfig.fetcherId,
+                fetcherConfig.fetcherConfig,
+            );
+            if (!data.data.valid) {
+                issues.push({
+                    fetcherId: fetcherConfig.fetcherId,
+                    error: data.data.error,
+                    issues: data.data.issues ? data.data.issues : 'Fetcher not found',
+                });
+            }
+        }
+        if (issues.length > 0) {
+            return next(
+                new ValidationError(
+                    `Validation failed for ${issues.length} fetcherConfigs`,
+                    issues,
+                ),
+            );
+        }
         next();
     } catch (err) {
         next(err);

@@ -3,6 +3,7 @@ import * as eventController from '../controllers/event.controller.js';
 import {
     validateEventId,
     validateProcessEventBody,
+    validateProvidedFetcherConfigs,
     validateFetcherConfigs,
     validateEventValidation,
 } from '../middlewares/event.validator.js';
@@ -15,6 +16,7 @@ eventRoutes.post(
     '/events/:eventId/process',
     validateEventId,
     validateProcessEventBody,
+    validateProvidedFetcherConfigs,
     validateFetcherConfigs,
     eventController.processEvent,
 );
