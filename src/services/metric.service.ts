@@ -1,75 +1,34 @@
-import { ZodError } from 'zod';
 import { IWindow } from '../types/window.js';
-import { ValidationError } from '../utils/customErrors.js';
+import { IFetcherConfig } from '../types/fetcherConfig.js';
+import { IFetch } from '../types/fetch.js';
+import { IEvent } from '../types/event.js';
+import { IAggregationResult } from '../types/aggregationResult.js';
+import { IAggregation } from '../types/aggregationConfig.js';
+import * as fetcherUtils from './utils/fetcher.util.js';
+import * as aggregationUtils from './utils/aggregation.util.js';
 import * as eventService from './events/event.service.js';
 
 export const processMetric = async (
     date: Date,
     window: IWindow,
-    eventType: string,
-    fetcherConfigs: Record<string, unknown>[],
+    eventId: string,
+    fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
-    aggregation: Record<string, unknown>,
-): Promise<{ value: number; evidences: Record<string, unknown>[] }> => {
-    const event = eventService.getEventById(eventType);
-    try {
-        event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
-            const fetcherConfig = fetcherConfigs.find((fc) => fc.id === fetcherConfigSchema.id);
-            fetcherConfigSchema.schema.parse(fetcherConfig?.config);
-        });
-        event.processConfigSchema.parse(processConfig);
+    aggregation: IAggregation,
+): Promise<IAggregationResult> => {
+    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(fetcherConfigs);
 
-        const mainEvents: Record<string, unknown>[] = await event.process(
-            date,
-            window,
-            fetcherConfigs,
-            processConfig,
-        );
+    const event: IEvent = eventService.getEventById(eventId);
+    const mainEvents: Record<string, unknown>[] = event.process(
+        date,
+        window,
+        fetchs,
+        processConfig,
+    );
 
-        // value calculation logic
-        let value: number = 0;
-        let evidences: Record<string, unknown>[] = [];
-
-        if (aggregation.operation === 'count') {
-            value = mainEvents.length;
-            evidences = mainEvents;
-        }
-
-        return { value, evidences };
-    } catch (error) {
-        if (error instanceof ZodError) {
-            throw new ValidationError('Invalid fetcher or process configuration', {
-                issues: error.issues,
-            });
-        }
-        throw error;
-    }
+    const aggregationResult: IAggregationResult = aggregationUtils.aggregateMainEvents(
+        mainEvents,
+        aggregation,
+    );
+    return aggregationResult;
 };
-
-/*export const processMetrics = async (
-    metricConfigs: IMetricConfig[],
-    date: Date,
-    window: IWindow,
-    auditConfig: Record<string, unknown>,
-): Promise<Record<string, IProcessedMetric>> => {
-    const processedMetrics: Record<string, IProcessedMetric> = {};
-    for (const metricConfig of metricConfigs) {
-        const metricName = metricConfig.name;
-        const processedMetric = await processMetric(
-            metricName,
-            date,
-            window,
-            metricConfig.metricConfig,
-            auditConfig,
-        );
-        processedMetrics[metricName] = {
-            name: metricName,
-            fetcher: getEventById(metricName).fetcher,
-            fetchResultIds: [],
-            metricConfig: metricConfig.metricConfig,
-            value: processedMetric.value,
-            evidences: processedMetric.evidences,
-        };
-    }
-    return processedMetrics;
-};*/

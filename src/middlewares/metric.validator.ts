@@ -94,11 +94,11 @@ const aggregationValidation = [
         .withMessage('aggregation is required')
         .isObject()
         .withMessage('aggregation must be an object'),
-    body('aggregation.operation')
+    body('aggregation.type')
         .exists({ checkNull: true })
-        .withMessage('aggregation.operation is required')
+        .withMessage('aggregation.type is required')
         .isIn(['count'])
-        .withMessage('aggregation.operation must be one of: count'),
+        .withMessage('aggregation.type must be one of: count'),
 ];
 
 export const validateProcessMetricValidation = [

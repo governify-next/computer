@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IWindow } from './window.js';
+import { IFetch } from './fetch.js';
 
 export interface IEvent {
     id: string;
@@ -16,8 +17,8 @@ export interface IEvent {
     process(
         date: Date,
         window: IWindow,
-        fetcherConfigs: Record<string, unknown>[],
+        fetchs: IFetch[],
         processConfig: Record<string, unknown>,
-    ): Promise<Record<string, unknown>[]>;
+    ): Record<string, unknown>[];
     processScript?: string;
 }

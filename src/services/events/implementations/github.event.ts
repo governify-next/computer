@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { IEvent } from '../../../types/event.js';
+import { IFetch } from '../../../types/fetch.js';
+import * as fetcherUtils from '../../utils/fetcher.util.js';
 
 export const EV_GITHUB_COMMITS: IEvent = {
     id: 'EV_GITHUB_COMMITS',
@@ -22,9 +24,12 @@ export const EV_GITHUB_COMMITS: IEvent = {
         owner: z.string(),
         repository: z.string(),
     }),
-    async process(_date, _window, _fetcherConfigs, _processConfig) {
-        const events: Record<string, unknown>[] = [];
+    process(_date, _window, _fetchs, _processConfig): Record<string, unknown>[] {
+        const commitsFetch: IFetch = fetcherUtils.getFetchByFetcherId(
+            _fetchs,
+            'FT_REST_GITHUB_COMMITS',
+        );
 
-        return events;
+        return commitsFetch.data as Record<string, unknown>[];
     },
 };

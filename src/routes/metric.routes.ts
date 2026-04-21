@@ -4,8 +4,4 @@ import { validateProcessMetricValidation } from '../middlewares/metric.validator
 
 export const metricRoutes = Router();
 
-metricRoutes.post(
-    '/metrics/process',
-    validateProcessMetricValidation,
-    metricController.processMetric,
-);
+metricRoutes.post('/metrics/process', metricController.processMetric);
