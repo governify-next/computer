@@ -8,6 +8,7 @@ import {
     validateProcessConfig,
     validateEventValidation,
 } from '../middlewares/event.validator.js';
+import { validateCollectorHealth } from '../middlewares/collector.validator.js';
 
 export const eventRoutes = Router();
 
@@ -15,6 +16,7 @@ eventRoutes.get('/events', eventController.getEvents);
 eventRoutes.get('/events/:eventId', validateEventId, eventController.getEventById);
 eventRoutes.post(
     '/events/:eventId/process',
+    validateCollectorHealth,
     validateEventId,
     validateProcessEventBody,
     validateProvidedFetcherConfigs,
@@ -24,6 +26,7 @@ eventRoutes.post(
 );
 eventRoutes.post(
     '/events/:eventId/validate',
+    validateCollectorHealth,
     validateEventValidation,
     eventController.validateEvent,
 );

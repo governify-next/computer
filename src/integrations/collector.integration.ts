@@ -7,6 +7,18 @@ const collectorAuthToken = jwt.sign(
     bootEnv.JWT_SECRET,
 );
 
+export const checkHealth = async (): Promise<boolean> => {
+    try {
+        const response = await fetch(`${collectorServiceUrl}/health`, {
+            method: 'GET',
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        return false;
+    }
+};
+
 export const validateFetcher = async (
     fetcherId: string,
     fetcherConfig: Record<string, unknown>,
