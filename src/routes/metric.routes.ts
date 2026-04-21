@@ -5,6 +5,7 @@ import {
     validateEventId,
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
+    validateProcessConfig,
 } from '../middlewares/metric.validator.js';
 
 export const metricRoutes = Router();
@@ -15,5 +16,6 @@ metricRoutes.post(
     validateEventId,
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
+    validateProcessConfig,
     metricController.computeMetric,
 );

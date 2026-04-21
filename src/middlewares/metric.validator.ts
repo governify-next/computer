@@ -1,6 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
 import { NotFoundError, ValidationError } from '../utils/customErrors.js';
+import { ZodError } from 'zod';
 import * as eventService from '../services/events/event.service.js';
 import * as collectorIntegration from '../integrations/collector.integration.js';
 
@@ -150,6 +151,25 @@ export const validateFetcherConfigs = async (req: Request, res: Response, next: 
                     issues,
                 ),
             );
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const validateProcessConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { eventId, processConfig } = req.body.event;
+        const event = eventService.getEventById(eventId);
+        try {
+            event.processConfigSchema.parse(processConfig);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return next(new ValidationError('Invalid processConfig', { issues: error.issues }));
+            } else {
+                throw error;
+            }
         }
         next();
     } catch (err) {

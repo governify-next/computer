@@ -5,6 +5,7 @@ import {
     validateProcessEventBody,
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
+    validateProcessConfig,
     validateEventValidation,
 } from '../middlewares/event.validator.js';
 
@@ -18,6 +19,7 @@ eventRoutes.post(
     validateProcessEventBody,
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
+    validateProcessConfig,
     eventController.processEvent,
 );
 eventRoutes.post(
