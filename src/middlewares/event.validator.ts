@@ -12,88 +12,9 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
     next();
 };
 
-const eventValidation = [
-    body('event')
-        .exists({ checkNull: true })
-        .withMessage('event is required')
-        .isObject()
-        .withMessage('event must be an object'),
-    body('event.eventId')
-        .exists({ checkNull: true })
-        .withMessage('event.eventId is required')
-        .isString()
-        .withMessage('event.eventId must be a string'),
-    body('event.date')
-        .exists({ checkNull: true })
-        .withMessage('date is required')
-        .isISO8601()
-        .withMessage('date must be a valid ISO 8601 date string'),
-    body('event.window')
-        .exists({ checkNull: true })
-        .withMessage('window is required')
-        .isObject()
-        .withMessage('window must be an object'),
-    body('event.window.anchorDate')
-        .exists({ checkNull: true })
-        .withMessage('window.anchorDate is required')
-        .isISO8601()
-        .withMessage('window.anchorDate must be a valid ISO 8601 date string')
-        .isAfter('2000-01-01T00:00:00.000Z')
-        .isBefore('2100-01-01T00:00:00.000Z')
-        .withMessage('window.anchorDate must be between 2000-01-01 and 2100-01-01'),
-    body('event.window.period')
-        .exists({ checkNull: true })
-        .withMessage('window.period is required')
-        .isArray({ min: 1 })
-        .withMessage('window.period must be an array with at least one entry'),
-    body('event.window.period.*.unit')
-        .exists({ checkNull: true })
-        .withMessage('window.period.*.unit is required')
-        .isIn(['millisecond', 'second', 'minute', 'hour', 'day', 'week'])
-        .withMessage('Period unit must be one of: millisecond, second, minute, hour, day, week'),
-    body('event.window.period.*.value')
-        .exists({ checkNull: true })
-        .withMessage('window.period.*.value is required')
-        .isInt({ min: 1 })
-        .withMessage('Period value must be a positive integer strictly greater than 0'),
-    body('event.fetcherConfigs')
-        .exists({ checkNull: true })
-        .withMessage('event.fetcherConfigs is required')
-        .isArray({ min: 1 })
-        .withMessage('event.fetcherConfigs must be an array with at least one entry'),
-    body('event.fetcherConfigs.*.fetcherId')
-        .exists({ checkNull: true })
-        .withMessage('event.fetcherConfigs.*.fetcherId is required')
-        .isString()
-        .withMessage('event.fetcherConfigs.*.fetcherId must be a string'),
-    body('event.fetcherConfigs.*.fetcherConfig')
-        .exists({ checkNull: true })
-        .withMessage('event.fetcherConfigs.*.fetcherConfig is required')
-        .isObject()
-        .withMessage('event.fetcherConfigs.*.fetcherConfig must be an object'),
-    body('event.processConfig')
-        .exists({ checkNull: true })
-        .withMessage('event.processConfig is required')
-        .isObject()
-        .withMessage('event.processConfig must be an object'),
-];
-
-const aggregationValidation = [
-    body('aggregation')
-        .exists({ checkNull: true })
-        .withMessage('aggregation is required')
-        .isObject()
-        .withMessage('aggregation must be an object'),
-    body('aggregation.type')
-        .exists({ checkNull: true })
-        .withMessage('aggregation.type is required')
-        .isIn(['count'])
-        .withMessage('aggregation.type must be one of: count'),
-];
-
 export const validateEventId = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { eventId } = req.body.event;
+        const { eventId } = req.params;
         const event = eventService.getEventById(eventId);
         if (!event) {
             return next(new NotFoundError(`Event ${eventId} not found`));
@@ -104,13 +25,75 @@ export const validateEventId = async (req: Request, res: Response, next: NextFun
     }
 };
 
+const dateValidation = body('date')
+    .exists({ checkNull: true })
+    .withMessage('date is required')
+    .isISO8601()
+    .withMessage('date must be a valid ISO 8601 date string');
+
+const windowValidation = [
+    body('window')
+        .exists({ checkNull: true })
+        .withMessage('window is required')
+        .isObject()
+        .withMessage('window must be an object'),
+    body('window.anchorDate')
+        .exists({ checkNull: true })
+        .withMessage('window.anchorDate is required')
+        .isISO8601()
+        .withMessage('window.anchorDate must be a valid ISO 8601 date string')
+        .isAfter('2000-01-01T00:00:00.000Z')
+        .isBefore('2100-01-01T00:00:00.000Z')
+        .withMessage('window.anchorDate must be between 2000-01-01 and 2100-01-01'),
+    body('window.period')
+        .exists({ checkNull: true })
+        .withMessage('window.period is required')
+        .isArray({ min: 1 })
+        .withMessage('window.period must be an array with at least one entry'),
+    body('window.period.*.unit')
+        .exists({ checkNull: true })
+        .withMessage('window.period.*.unit is required')
+        .isIn(['millisecond', 'second', 'minute', 'hour', 'day', 'week'])
+        .withMessage('Period unit must be one of: millisecond, second, minute, hour, day, week'),
+    body('window.period.*.value')
+        .exists({ checkNull: true })
+        .withMessage('window.period.*.value is required')
+        .isInt({ min: 1 })
+        .withMessage('Period value must be a positive integer strictly greater than 0'),
+];
+
+const fetcherConfigsValidation = [
+    body('fetcherConfigs')
+        .exists({ checkNull: true })
+        .withMessage('fetcherConfigs is required')
+        .isArray({ min: 1 })
+        .withMessage('fetcherConfigs must be an array with at least one entry'),
+    body('fetcherConfigs.*.fetcherId')
+        .exists({ checkNull: true })
+        .withMessage('fetcherConfigs.*.fetcherId is required')
+        .isString()
+        .withMessage('fetcherConfigs.*.fetcherId must be a string'),
+    body('fetcherConfigs.*.fetcherConfig')
+        .exists({ checkNull: true })
+        .withMessage('fetcherConfigs.*.fetcherConfig is required')
+        .isObject()
+        .withMessage('fetcherConfigs.*.fetcherConfig must be an object'),
+];
+
+const processConfigValidation = body('processConfig')
+    .exists({ checkNull: true })
+    .withMessage('processConfig is required')
+    .isObject()
+    .withMessage('processConfig must be an object');
+
 export const validateProvidedFetcherConfigs = async (
     req: Request,
     res: Response,
     next: NextFunction,
 ) => {
     try {
-        const { eventId, fetcherConfigs } = req.body.event;
+        const eventId = req.params.eventId;
+        const { fetcherConfigs } = req.body;
         const event = eventService.getEventById(eventId);
         for (const fetcherId of event.fetcherIds) {
             const fetcherConfig = fetcherConfigs.find(
@@ -129,7 +112,7 @@ export const validateProvidedFetcherConfigs = async (
 export const validateFetcherConfigs = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Validation logic for fetcherConfigs against collector API validation endpoint
-        const { fetcherConfigs } = req.body.event;
+        const { fetcherConfigs } = req.body;
         const issues: Record<string, unknown>[] = [];
         for (const fetcherConfig of fetcherConfigs) {
             const data = await collectorIntegration.validateFetcher(
@@ -160,7 +143,8 @@ export const validateFetcherConfigs = async (req: Request, res: Response, next: 
 
 export const validateProcessConfig = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { eventId, processConfig } = req.body.event;
+        const eventId = req.params.eventId;
+        const { processConfig } = req.body;
         const event = eventService.getEventById(eventId);
         try {
             event.processConfigSchema.parse(processConfig);
@@ -177,8 +161,38 @@ export const validateProcessConfig = async (req: Request, res: Response, next: N
     }
 };
 
-export const validateComputeMetricValidation = [
-    ...eventValidation,
-    ...aggregationValidation,
+const fetcherConfigsOptionalValidation = [
+    body('fetcherConfigs')
+        .optional()
+        .isArray()
+        .withMessage('events.fetcherConfigs must be an array'),
+    body('fetcherConfigs.*.fetcherId')
+        .exists({ checkNull: true })
+        .withMessage('events.fetcherConfigs.*.fetcherId is required')
+        .isString()
+        .withMessage('events.fetcherConfigs.*.fetcherId must be a string'),
+    body('fetcherConfigs.*.fetcherConfig')
+        .exists({ checkNull: true })
+        .withMessage('events.fetcherConfigs.*.fetcherConfig is required')
+        .isObject()
+        .withMessage('events.fetcherConfigs.*.fetcherConfig must be an object'),
+];
+
+const processConfigOptionalValidation = body('processConfig')
+    .optional()
+    .isObject()
+    .withMessage('processConfig must be an object');
+
+export const validateProcessEventBody = [
+    dateValidation,
+    ...windowValidation,
+    ...fetcherConfigsValidation,
+    processConfigValidation,
+    collectValidationErrors,
+];
+
+export const validateEventValidation = [
+    ...fetcherConfigsOptionalValidation,
+    processConfigOptionalValidation,
     collectValidationErrors,
 ];

@@ -3,17 +3,14 @@ info:
     title: Computer API
     version: 1.0.0
     description: |
-        REST API for managing metrics and states within Computer API.
+        REST API for event processing and metric computation in Computer.
 servers:
     - url: /
 
 tags:
-    - name: Health
-      description: Server health check
-    - name: Metrics
-      description: Metric management
-    - name: States
-      description: State management
+    - { name: Health, description: Server health check }
+    - { name: Events, description: Event catalog, processing and validation }
+    - { name: Metrics, description: Metric computation }
 
 paths:
     # ──────────────────────────────────────────────
@@ -24,94 +21,162 @@ paths:
             tags:
                 - Health
             summary: Health check
+            operationId: healthCheck
             responses:
                 '200':
-                    description: OK
+                    description: Service is up
                     content:
                         application/json:
                             schema:
-                                type: object
-                                properties:
-                                    status:
-                                        type: string
+                                $ref: '#/components/schemas/HealthResponse'
+
+    # ──────────────────────────────────────────────
+    # Events
+    # ──────────────────────────────────────────────
+    /api/v1/events:
+        get:
+            tags:
+                - Events
+            summary: Get all events
+            operationId: getEvents
+            description: Returns all available event definitions.
+            security:
+                - BearerAuth: []
+            responses:
+                '200':
+                    description: Events retrieved successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/Event'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/events/{eventId}:
+        parameters:
+            - $ref: '#/components/parameters/eventId'
+        get:
+            tags:
+                - Events
+            summary: Get event by id
+            operationId: getEventById
+            description: Returns one event definition by id.
+            security:
+                - BearerAuth: []
+            responses:
+                '200':
+                    description: Event retrieved successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/Event'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/events/{eventId}/process:
+        parameters:
+            - $ref: '#/components/parameters/eventId'
+            - $ref: '#/components/parameters/expand'
+        post:
+            tags:
+                - Events
+            summary: Process an event
+            operationId: processEvent
+            description: Processes an event for a date and window using the provided fetcher and process configs.
+            security:
+                - BearerAuth: []
+            requestBody:
+                $ref: '#/components/requestBodies/ProcessEventBody'
+            responses:
+                '200':
+                    description: Event processed successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              oneOf:
+                                                  - $ref: '#/components/schemas/ProcessedEventSummary'
+                                                  - $ref: '#/components/schemas/ProcessedEventDetailed'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/events/{eventId}/validate:
+        parameters:
+            - $ref: '#/components/parameters/eventId'
+        post:
+            tags:
+                - Events
+            summary: Validate event configuration
+            operationId: validateEvent
+            description: Validates optional fetcher configs and process config for the selected event.
+            security:
+                - BearerAuth: []
+            requestBody:
+                $ref: '#/components/requestBodies/ValidateEventBody'
+            responses:
+                '200':
+                    description: Validation executed.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/EventValidationResult'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '500':
+                    $ref: '#/components/responses/InternalError'
 
     # ──────────────────────────────────────────────
     # Metrics
     # ──────────────────────────────────────────────
-    /api/v1/metrics:
-        get:
-            tags:
-                - Metrics
-            summary: Get all metrics
-            operationId: getMetrics
-            security:
-                - BearerAuth: []
-            description: Retrieves a list of all available metrics with their configurations.
-            responses:
-                '200':
-                    description: List of metrics retrieved successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              type: array
-                                              items:
-                                                  $ref: '#/components/schemas/Metric'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-    /api/v1/metrics/{metricName}:
-        parameters:
-            - $ref: '#/components/parameters/metricName'
-        get:
-            tags:
-                - Metrics
-            summary: Get metric by name
-            operationId: getMetricByName
-            security:
-                - BearerAuth: []
-            description: Retrieves the configuration details of a specific metric identified by its name.
-            responses:
-                '200':
-                    description: Metric retrieved successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/Metric'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-    /api/v1/metrics/{metricName}/process:
-        parameters:
-            - $ref: '#/components/parameters/metricName'
+    /api/v1/metric/compute:
         post:
             tags:
                 - Metrics
-            summary: Process a metric
-            operationId: processMetric
+            summary: Compute metric
+            operationId: computeMetric
+            description: Processes an event and applies aggregation to compute a metric value.
             security:
                 - BearerAuth: []
-            description: Executes the processing of a metric based on the provided configuration and time window.
             requestBody:
-                $ref: '#/components/requestBodies/ProcessMetricBody'
+                $ref: '#/components/requestBodies/ComputeMetricBody'
             responses:
                 '200':
-                    description: Metric processed successfully.
+                    description: Metric computed successfully.
                     content:
                         application/json:
                             schema:
@@ -120,574 +185,163 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              $ref: '#/components/schemas/ProcessedMetricResult'
+                                              $ref: '#/components/schemas/ComputedMetric'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
                 '400':
                     $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-    /api/v1/metrics/{metricName}/validate:
-        parameters:
-            - $ref: '#/components/parameters/metricName'
-        post:
-            tags:
-                - Metrics
-            summary: Validate metric configuration
-            operationId: validateMetricConfig
-            security:
-                - BearerAuth: []
-            description: Validates the provided metric configuration against the metric's defined schema.
-            requestBody:
-                description: Request body for validating metric configuration
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                metricConfig:
-                                    $ref: '#/components/schemas/MetricConfig'
-                                auditConfig:
-                                    $ref: '#/components/schemas/AuditConfig'
-            responses:
-                '200':
-                    description: Metric configuration is valid.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/validateMetricResult'
-                '400':
-                    $ref: '#/components/responses/ValidateMetricValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-
-    # ──────────────────────────────────────────────
-    # States
-    # ──────────────────────────────────────────────
-    /api/v1/state/generate:
-        post:
-            tags:
-                - States
-            summary: Generate a state
-            operationId: generateState
-            security:
-                - BearerAuth: []
-            parameters:
-                - $ref: '#/components/parameters/isAsync'
-            description: Creates a state and optionally runs metric processing and compliance evaluation.
-            requestBody:
-                $ref: '#/components/requestBodies/GenerateStateBody'
-            responses:
-                '200':
-                    description: State created successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-
-    /api/v1/states/generate:
-        post:
-            tags:
-                - States
-            summary: Generate multiple states
-            operationId: generateStates
-            security:
-                - BearerAuth: []
-            parameters:
-                - $ref: '#/components/parameters/isAsync'
-            description: Creates states for multiple signatures and optionally processes them asynchronously.
-            requestBody:
-                $ref: '#/components/requestBodies/GenerateStatesBody'
-            responses:
-                '200':
-                    description: States created successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              type: array
-                                              items:
-                                                  $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-
-    /api/v1/states/search:
-        post:
-            tags:
-                - States
-            summary: Search states
-            operationId: searchStates
-            security:
-                - BearerAuth: []
-            description: Retrieves states using filters, pagination, and sorting criteria.
-            requestBody:
-                $ref: '#/components/requestBodies/SearchStatesBody'
-            responses:
-                '200':
-                    description: States retrieved successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              type: array
-                                              items:
-                                                  $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-
-    /api/v1/states/{id}:
-        parameters:
-            - $ref: '#/components/parameters/stateId'
-        get:
-            tags:
-                - States
-            summary: Get state by id
-            operationId: getStateById
-            security:
-                - BearerAuth: []
-            description: Retrieves a state by its identifier.
-            responses:
-                '200':
-                    description: State retrieved successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-        put:
-            tags:
-                - States
-            summary: Update state by id
-            operationId: updateStateById
-            security:
-                - BearerAuth: []
-            description: Updates a state by its identifier.
-            requestBody:
-                $ref: '#/components/requestBodies/UpdateStateBody'
-            responses:
-                '200':
-                    description: State updated successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-        delete:
-            tags:
-                - States
-            summary: Delete state by id
-            operationId: deleteStateById
-            security:
-                - BearerAuth: []
-            description: Deletes a state by its identifier.
-            responses:
-                '200':
-                    description: State deleted successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
                 '404':
                     $ref: '#/components/responses/NotFound'
                 '500':
                     $ref: '#/components/responses/InternalError'
 
-    /api/v1/states/signatures/{signatureId}:
-        parameters:
-            - $ref: '#/components/parameters/signatureId'
-        get:
-            tags:
-                - States
-            summary: Get states by signature id
-            operationId: getStatesBySignatureId
-            security:
-                - BearerAuth: []
-            description: Retrieves all states associated with a signature.
-            responses:
-                '200':
-                    description: States retrieved successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              type: array
-                                              items:
-                                                  $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
-        delete:
-            tags:
-                - States
-            summary: Delete states by signature id
-            operationId: deleteStatesBySignatureId
-            security:
-                - BearerAuth: []
-            description: Deletes all states associated with a signature.
-            responses:
-                '200':
-                    description: States deleted successfully.
-                    content:
-                        application/json:
-                            schema:
-                                allOf:
-                                    - $ref: '#/components/schemas/SuccessResponse'
-                                    - type: object
-                                      properties:
-                                          data:
-                                              type: array
-                                              items:
-                                                  $ref: '#/components/schemas/State'
-                '400':
-                    $ref: '#/components/responses/ValidationError'
-                '401':
-                    $ref: '#/components/responses/Unauthorized'
-                '404':
-                    $ref: '#/components/responses/NotFound'
-                '500':
-                    $ref: '#/components/responses/InternalError'
 components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: JWT token required when AUTHENTICATION_ENABLED=true.
     # ── Parameters ────────────────────────────
     parameters:
-        metricName:
-            name: metricName
+        eventId:
+            name: eventId
             in: path
             required: true
-            description: Name of the metric
+            description: Event identifier.
             schema:
                 type: string
-                example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-        stateId:
-            name: id
-            in: path
-            required: true
-            description: State identifier
-            schema:
-                type: string
-                example: 67c9ff7b2ddf1b3940f9f122
-        signatureId:
-            name: signatureId
-            in: path
-            required: true
-            description: Signature identifier
-            schema:
-                type: string
-                example: 67c9ff7b2ddf1b3940f9f111
-        isAsync:
-            name: isAsync
+                example: EV_GITHUB_COMMITS
+        expand:
+            name: expand
             in: query
             required: false
-            description: If true, the state is created and processed in background.
+            description: If true, includes raw fetch data in the response.
             schema:
                 type: boolean
                 default: false
                 example: false
+
     # ── Request Bodies ────────────────────────
     requestBodies:
-        ProcessMetricBody:
-            description: Request body for processing a metric
+        ProcessEventBody:
+            description: Request body for event processing
+            required: true
             content:
                 application/json:
                     schema:
-                        type: object
-                        properties:
-                            date:
-                                type: string
-                                format: date-time
-                                example: '2025-12-25T20:00:00.000Z'
-                            window:
-                                $ref: '#/components/schemas/Window'
-                            metricConfig:
-                                $ref: '#/components/schemas/MetricConfig'
-                            auditConfig:
-                                $ref: '#/components/schemas/AuditConfig'
-                        required:
-                            - date
-                            - window
-                            - metricConfig
-                            - auditConfig
-        GenerateStateBody:
-            description: Request body for generating a single state
+                        $ref: '#/components/schemas/ProcessEventRequest'
+        ValidateEventBody:
+            description: Request body for event validation (all fields optional)
+            required: true
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/GenerateStateRequest'
-                    example:
-                        stateDate: '2025-12-25T20:00:00.000Z'
-                        signatureId: 67c9ff7b2ddf1b3940f9f111
-                        auditConfig:
-                            owner: johndoe
-                            repository: governify-next
-                        guarantee:
-                            name: PR lead time under 72h
-                            numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                            comparator: '>='
-                            threshold: 10
-                            window:
-                                anchorDate: '2025-12-25T20:00:00.000Z'
-                                period:
-                                    - unit: day
-                                      value: 7
-                            metricConfigs:
-                                - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                                  metricConfig:
-                                      tag: feat
-        GenerateStatesBody:
-            description: Request body for generating multiple states
+                        $ref: '#/components/schemas/ValidateEventRequest'
+        ComputeMetricBody:
+            description: Request body for metric computation
+            required: true
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/GenerateStatesRequest'
-                    example:
-                        stateDate: '2025-12-25T20:00:00.000Z'
-                        signatures:
-                            - signatureId: 67c9ff7b2ddf1b3940f9f111
-                              auditConfig:
-                                  owner: johndoe
-                                  repository: governify-next
-                              guarantee:
-                                  name: PR lead time under 72h
-                                  numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                                  comparator: '>='
-                                  threshold: 10
-                                  window:
-                                      anchorDate: '2025-12-25T20:00:00.000Z'
-                                      period:
-                                          - unit: day
-                                            value: 7
-                                  metricConfigs:
-                                      - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                                        metricConfig:
-                                            tag: feat
-                            - signatureId: 67c9ff7b2ddf1b3940f9f222
-                              auditConfig:
-                                  owner: johndoe
-                                  repository: governify-next
-                              guarantee:
-                                  name: PR lead time under 72h
-                                  numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                                  comparator: '>='
-                                  threshold: 15
-                                  window:
-                                      anchorDate: '2025-12-25T20:00:00.000Z'
-                                      period:
-                                          - unit: day
-                                            value: 14
-                                  metricConfigs:
-                                      - name: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                                        metricConfig:
-                                            tag: chore
-        SearchStatesBody:
-            description: Request body for searching states
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/SearchStatesRequest'
-                    example:
-                        filters:
-                            signatureId:
-                                eq: 67c9ff7b2ddf1b3940f9f111
-                            status:
-                                in:
-                                    - COMPLETED
-                                    - FAILED
-                            stateDate:
-                                gte: '2025-12-01T00:00:00.000Z'
-                                lte: '2025-12-31T23:59:59.999Z'
-                        pagination:
-                            limit: 20
-                            skip: 0
-                        sort:
-                            stateDate: -1
-        UpdateStateBody:
-            description: Request body for updating a state
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/UpdateStateRequest'
-                    example:
-                        status: COMPLETED
-                        compliant: true
-                        indeterminate: false
-                        threshold: 12
-                        comparator: '>='
-                        numericExpression: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                        auditConfig:
-                            owner: johndoe
-                            repository: governify-next
-                        window:
-                            anchorDate: '2025-12-25T20:00:00.000Z'
-                            period:
-                                - unit: day
-                                  value: 7
+                        $ref: '#/components/schemas/ComputeMetricRequest'
 
-    # ── Reusable responses ────────────────────────
+    # ── Responses ─────────────────────────────
     responses:
+        Unauthorized:
+            description: Missing, malformed, invalid or expired bearer token.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+                    examples:
+                        missingOrMalformed:
+                            summary: Missing or malformed Authorization header
+                            value:
+                                success: false
+                                message: Authorization header missing or malformed
+                                httpStatus: 401
+                                appCode: UNAUTHORIZED
+                                data: null
+                                error:
+                                    message: Authorization header missing or malformed
+                                    details: null
+                        invalidOrExpired:
+                            summary: Invalid or expired token
+                            value:
+                                success: false
+                                message: Invalid or expired token
+                                httpStatus: 401
+                                appCode: UNAUTHORIZED
+                                data: null
+                                error:
+                                    message: Invalid or expired token
+                                    details: null
         ValidationError:
-            description: Validation error in the submitted data
+            description: Validation error.
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/ErrorResponse'
                     example:
                         success: false
-                        message: Validation error
+                        message: Validation failed
                         httpStatus: 400
                         appCode: VALIDATION_ERROR
                         data: null
                         error:
-                            message: Validation error
-                            details: null
+                            message: Validation failed
+                            details:
+                                - msg: date is required
+                                  path: date
         NotFound:
-            description: The requested resource does not exist
+            description: Requested resource not found.
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/ErrorResponse'
                     example:
                         success: false
-                        message: Resource not found
+                        message: Event EV_UNKNOWN not found
                         httpStatus: 404
                         appCode: NOT_FOUND
                         data: null
                         error:
-                            message: Resource not found
-                            details: null
-        Unauthorized:
-            description: Missing or invalid authentication token
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/ErrorResponse'
-                    example:
-                        success: false
-                        message: Authorization header missing or malformed
-                        httpStatus: 401
-                        appCode: UNAUTHORIZED
-                        data: null
-                        error:
-                            message: Authorization header missing or malformed
+                            message: Event EV_UNKNOWN not found
                             details: null
         InternalError:
-            description: Internal server error
+            description: Internal server error.
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/ErrorResponse'
                     example:
                         success: false
-                        message: Internal server error
+                        message: Unexpected error
                         httpStatus: 500
                         appCode: UNKNOWN_ERROR
                         data: null
                         error:
-                            message: Internal server error
+                            message: Unexpected error
                             details: null
-        ValidateMetricValidationError:
-            description: Metric configuration validation failed
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/ErrorResponse'
-                    example:
-                        success: false
-                        message: Metric validation failed
-                        httpStatus: 400
-                        appCode: VALIDATION_ERROR
-                        data:
-                            valid: false
-                            error: Invalid auditConfig
-                            issues:
-                                - expected: string
-                                  code: invalid_type
-                                  path: [owner]
-                                  message: 'Invalid input: expected string, received undefined'
-                                  source: auditConfig
-                        error: null
-    # ── Schemas ───────────────────────────────────
+
+    # ── Schemas ───────────────────────────────
     schemas:
-        # ── Standard response ────────────────────
+        HealthResponse:
+            type: object
+            properties:
+                status:
+                    type: string
+                    example: ok
+                message:
+                    type: string
+                    example: Health check passed
+            required:
+                - status
+                - message
+
         SuccessResponse:
             type: object
-            description: Standard wrapper for all successful API responses
             properties:
                 success:
                     type: boolean
@@ -701,6 +355,7 @@ components:
                 appCode:
                     type: string
                     example: SUCCESS
+                data: {}
                 error:
                     type: object
                     nullable: true
@@ -715,17 +370,19 @@ components:
 
         ErrorResponse:
             type: object
-            description: Standard wrapper for all error API responses
             properties:
                 success:
                     type: boolean
                     example: false
                 message:
                     type: string
+                    example: Validation failed
                 httpStatus:
                     type: integer
+                    example: 400
                 appCode:
                     type: string
+                    example: VALIDATION_ERROR
                 data:
                     type: object
                     nullable: true
@@ -735,10 +392,11 @@ components:
                     properties:
                         message:
                             type: string
+                            example: Validation failed
                         details:
-                            description: Additional error information (may be null)
-                            type: object
                             nullable: true
+                    required:
+                        - message
             required:
                 - success
                 - message
@@ -747,533 +405,372 @@ components:
                 - data
                 - error
 
-        # ── Metric ─────────────────────────
-        Metric:
+        Event:
             type: object
-            description: Metric definition and configuration
+            description: Event definition currently available in the service.
             properties:
-                name:
+                id:
                     type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                description:
-                    type: string
-                    example: Counts the number of commits in a GitHub repository
-                fetcher:
-                    type: string
-                    example: FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS
-                metricConfigSchema:
-                    $ref: '#/components/schemas/MetricConfigSchema'
-                auditConfigSchema:
-                    $ref: '#/components/schemas/AuditConfigSchema'
-                processScript:
-                    type: string
-                    example: |
-                        async process(_date,_window,_metricConfig,_auditConfig){const evidences=[];return{value:0,evidences}}
-
-        ProcessedMetricResult:
-            type: object
-            description: Result of processing a metric
-            properties:
-                value:
-                    type: number
-                    example: 42
-                evidences:
-                    type: array
-                    items:
-                        type: object
-                        example:
-                            name: 'feat: add new API endpoint'
-                            author: 'johndoe'
-
-        validateMetricResult:
-            type: object
-            description: Result of validating a metric configuration
-            properties:
-                valid:
-                    type: boolean
-                    example: true
-                errors:
-                    type: array
-                    items:
-                        type: string
-                    example: []
-
-        # ── State ─────────────────────────
-        MetricConfigInput:
-            type: object
-            description: Metric config reference used inside guarantee definitions
-            properties:
-                name:
-                    type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                metricConfig:
-                    $ref: '#/components/schemas/MetricConfig'
-            required:
-                - name
-                - metricConfig
-
-        GuaranteeInput:
-            type: object
-            description: Guarantee definition used for state generation
-            properties:
-                name:
-                    type: string
-                    example: PR lead time under 72h
-                numericExpression:
-                    type: string
-                    example: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                comparator:
-                    type: string
-                    example: '>='
-                threshold:
-                    type: number
-                    example: 10
-                window:
-                    $ref: '#/components/schemas/Window'
-                metricConfigs:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/MetricConfigInput'
-            required:
-                - name
-                - numericExpression
-                - comparator
-                - threshold
-                - window
-                - metricConfigs
-
-        GenerateStateRequest:
-            type: object
-            description: Request payload for generating one state
-            properties:
-                stateDate:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:00.000Z'
-                signatureId:
-                    type: string
-                    example: 67c9ff7b2ddf1b3940f9f111
-                auditConfig:
-                    $ref: '#/components/schemas/AuditConfig'
-                guarantee:
-                    $ref: '#/components/schemas/GuaranteeInput'
-            required:
-                - stateDate
-                - signatureId
-                - auditConfig
-                - guarantee
-
-        SignatureStateInput:
-            type: object
-            description: Signature item used to generate multiple states
-            properties:
-                signatureId:
-                    type: string
-                    example: 67c9ff7b2ddf1b3940f9f111
-                auditConfig:
-                    $ref: '#/components/schemas/AuditConfig'
-                guarantee:
-                    $ref: '#/components/schemas/GuaranteeInput'
-            required:
-                - signatureId
-                - auditConfig
-                - guarantee
-
-        GenerateStatesRequest:
-            type: object
-            description: Request payload for generating multiple states
-            properties:
-                stateDate:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:00.000Z'
-                signatures:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/SignatureStateInput'
-            required:
-                - stateDate
-                - signatures
-
-        SearchFilterOperators:
-            type: object
-            description: Supported operators for state search filters
-            properties:
-                eq:
-                    description: Equal to
-                ne:
-                    description: Not equal to
-                gt:
-                    type: number
-                    description: Greater than
-                gte:
-                    type: number
-                    description: Greater than or equal to
-                lt:
-                    type: number
-                    description: Less than
-                lte:
-                    type: number
-                    description: Less than or equal to
-                in:
-                    type: array
-                    items: {}
-                    description: In list
-
-        SearchStatesRequest:
-            type: object
-            description: Request payload for searching states
-            properties:
-                filters:
-                    type: object
-                    description: Arbitrary key-value filters compatible with the Mongo query builder
-                    additionalProperties:
-                        oneOf:
-                            - type: string
-                            - type: number
-                            - type: boolean
-                            - $ref: '#/components/schemas/SearchFilterOperators'
-                pagination:
+                    example: EV_GITHUB_COMMITS
+                moreInfo:
                     type: object
                     properties:
-                        limit:
-                            type: integer
-                            minimum: 1
-                            example: 20
-                        skip:
-                            type: integer
-                            minimum: 0
-                            example: 0
-                sort:
-                    type: object
-                    additionalProperties:
-                        type: integer
-                        enum: [1, -1]
-                    example:
-                        stateDate: -1
-
-        ProcessedStateMetric:
-            type: object
-            description: Processed metric attached to a state
-            properties:
-                name:
-                    type: string
-                    example: MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS
-                fetcher:
-                    type: string
-                    example: FT_ELEMENT_xx_REST_GITHUB_xx_COMMITS
-                fetchResultIds:
+                        title:
+                            type: string
+                            example: Number of Commits by Team
+                        description:
+                            type: string
+                            example: Total number of commits made to a specific repository by the entire team.
+                        example:
+                            type: string
+                            example: If the team made 50 commits in the last month, the metric value would be 50.
+                    required:
+                        - title
+                        - description
+                        - example
+                fetcherIds:
                     type: array
                     items:
                         type: string
                     example:
-                        - 67c9ff7b2ddf1b3940f9f321
-                metricConfig:
-                    $ref: '#/components/schemas/MetricConfig'
-                value:
-                    type: number
-                    example: 42
-                evidences:
-                    type: array
-                    items:
-                        type: object
-                    example:
-                        - name: 'feat: add new API endpoint'
-                          author: johndoe
+                        - FT_REST_GITHUB_COMMITS
+                processConfigSchema:
+                    type: object
+                    description: Serialized zod schema used to validate processConfig.
+                    additionalProperties: true
+                processScript:
+                    type: string
+                    nullable: true
+                    description: Stringified process function for documentation/debugging.
             required:
-                - name
-                - fetcher
-                - fetchResultIds
-                - metricConfig
-                - value
-                - evidences
+                - id
+                - moreInfo
+                - fetcherIds
+                - processConfigSchema
 
-        State:
+        FetcherConfig:
             type: object
-            description: State entity persisted in MongoDB
             properties:
-                _id:
+                fetcherId:
                     type: string
-                    example: 67c9ff7b2ddf1b3940f9f122
-                signatureId:
-                    type: string
-                    example: 67c9ff7b2ddf1b3940f9f111
-                computationStartDate:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:00.000Z'
-                computationEndDate:
-                    type: string
-                    format: date-time
-                    nullable: true
-                    example: '2025-12-25T20:00:08.000Z'
-                stateDate:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:00.000Z'
-                stateType:
-                    type: string
-                    enum: [COMPLIANCE, EVOLUTION]
-                    example: EVOLUTION
-                status:
-                    type: string
-                    enum: [IN_PROGRESS, COMPLETED, FAILED]
-                    example: COMPLETED
-                numericExpression:
-                    type: string
-                    example: 'MT_ELEMENT_xx_GITHUB_xx_COUNT_COMMITS'
-                comparator:
-                    type: string
-                    example: '>='
-                threshold:
-                    type: number
-                    example: 10
-                replacedNumericExpression:
-                    type: string
-                    nullable: true
-                    example: '42'
-                numericExpressionValue:
-                    type: number
-                    nullable: true
-                    example: 42
-                compliant:
-                    type: boolean
-                    nullable: true
-                    example: true
-                indeterminate:
-                    type: boolean
-                    nullable: true
-                    example: false
-                window:
-                    $ref: '#/components/schemas/Window'
-                auditConfig:
-                    $ref: '#/components/schemas/AuditConfig'
-                processedMetrics:
-                    type: array
-                    nullable: true
-                    items:
-                        $ref: '#/components/schemas/ProcessedStateMetric'
-                createdAt:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:00.000Z'
-                updatedAt:
-                    type: string
-                    format: date-time
-                    example: '2025-12-25T20:00:08.000Z'
+                    example: FT_REST_GITHUB_COMMITS
+                fetcherConfig:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        owner: governify
+                        repository: governify-next
+            required:
+                - fetcherId
+                - fetcherConfig
 
-        UpdateStateRequest:
+        FetchSummary:
             type: object
-            description: Partial payload for updating a state
             properties:
-                stateDate:
+                fetcherId:
                     type: string
-                    format: date-time
-                stateType:
+                fetcherConfig:
+                    type: object
+                    additionalProperties: true
+                fetchResultId:
                     type: string
-                    enum: [COMPLIANCE, EVOLUTION]
-                status:
-                    type: string
-                    enum: [IN_PROGRESS, COMPLETED, FAILED]
-                numericExpression:
-                    type: string
-                comparator:
-                    type: string
-                threshold:
-                    type: number
-                replacedNumericExpression:
-                    type: string
-                    nullable: true
-                numericExpressionValue:
-                    type: number
-                    nullable: true
-                compliant:
-                    type: boolean
-                    nullable: true
-                indeterminate:
-                    type: boolean
-                    nullable: true
-                window:
-                    $ref: '#/components/schemas/Window'
-                auditConfig:
-                    $ref: '#/components/schemas/AuditConfig'
-                processedMetrics:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/ProcessedStateMetric'
-        # ── Window ─────────────────────────
+            required:
+                - fetcherId
+                - fetcherConfig
+                - fetchResultId
+
+        FetchDetail:
+            allOf:
+                - $ref: '#/components/schemas/FetchSummary'
+                - type: object
+                  properties:
+                      data:
+                          description: Raw data returned by collector for this fetcher.
+                  required:
+                      - data
+
         Window:
             type: object
-            description: Time window configuration for metric processing
             properties:
+                anchorDate:
+                    type: string
+                    format: date-time
+                    example: '2026-04-22T10:00:00.000Z'
                 period:
                     type: array
+                    minItems: 1
                     items:
                         type: object
                         properties:
                             unit:
                                 type: string
-                                enum: [minute, hour, day, week, month]
+                                enum: [millisecond, second, minute, hour, day, week]
                                 example: day
                             value:
                                 type: integer
-                                example: 1
-                anchorDate:
+                                minimum: 1
+                                example: 30
+                        required:
+                            - unit
+                            - value
+            required:
+                - anchorDate
+                - period
+
+        ProcessEventRequest:
+            type: object
+            properties:
+                date:
                     type: string
                     format: date-time
-                    example: '2025-12-08T20:00:00.000Z'
+                    example: '2026-04-22T10:00:00.000Z'
+                window:
+                    $ref: '#/components/schemas/Window'
+                fetcherConfigs:
+                    type: array
+                    minItems: 1
+                    items:
+                        $ref: '#/components/schemas/FetcherConfig'
+                processConfig:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        owner: governify
+                        repository: governify-next
+            required:
+                - date
+                - window
+                - fetcherConfigs
+                - processConfig
 
-        # ── MetricConfig ─────────────────────────
-        MetricConfig:
+        ValidateEventRequest:
             type: object
-            description: Configuration details for a metric (dynamic structure depending on metric type)
-            additionalProperties: true
-            example:
-                tag: 'feat'
+            description: At least one of fetcherConfigs or processConfig is recommended.
+            properties:
+                fetcherConfigs:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FetcherConfig'
+                processConfig:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        owner: governify
+                        repository: governify-next
 
-        MetricConfigSchema:
+        ProcessedEventSummary:
             type: object
-            description: JSON Schema for validating metric configuration (Zod-like structure)
+            properties:
+                events:
+                    type: array
+                    items:
+                        type: object
+                        additionalProperties: true
+                eventId:
+                    type: string
+                    example: EV_GITHUB_COMMITS
+                date:
+                    type: string
+                    format: date-time
+                    example: '2026-04-22T10:00:00.000Z'
+                window:
+                    $ref: '#/components/schemas/Window'
+                fetchs:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FetchSummary'
+                processConfig:
+                    type: object
+                    additionalProperties: true
+            required:
+                - events
+                - eventId
+                - date
+                - window
+                - fetchs
+                - processConfig
+
+        ProcessedEventDetailed:
+            type: object
+            properties:
+                events:
+                    type: array
+                    items:
+                        type: object
+                        additionalProperties: true
+                eventId:
+                    type: string
+                    example: EV_GITHUB_COMMITS
+                date:
+                    type: string
+                    format: date-time
+                    example: '2026-04-22T10:00:00.000Z'
+                window:
+                    $ref: '#/components/schemas/Window'
+                fetchs:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FetchDetail'
+                processConfig:
+                    type: object
+                    additionalProperties: true
+            required:
+                - events
+                - eventId
+                - date
+                - window
+                - fetchs
+                - processConfig
+
+        EventValidationIssue:
+            type: object
+            description: Validation issue from fetcherConfig or processConfig.
+            properties:
+                source:
+                    type: string
+                    enum: [fetcherConfig, processConfig]
+                    example: processConfig
+                fetcherId:
+                    type: string
+                    nullable: true
+                    example: FT_REST_GITHUB_COMMITS
+                code:
+                    type: string
+                    example: invalid_type
+                message:
+                    type: string
+                    example: Required
+                path:
+                    type: array
+                    items:
+                        oneOf:
+                            - type: string
+                            - type: integer
+            required:
+                - source
+
+        EventValidationResult:
+            oneOf:
+                - type: object
+                  properties:
+                      valid:
+                          type: boolean
+                          enum: [true]
+                          example: true
+                  required:
+                      - valid
+                - type: object
+                  properties:
+                      valid:
+                          type: boolean
+                          enum: [false]
+                          example: false
+                      error:
+                          type: string
+                          example: Invalid processConfig
+                      issues:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/EventValidationIssue'
+                  required:
+                      - valid
+                      - error
+
+        AggregationConfig:
+            type: object
             properties:
                 type:
                     type: string
-                    example: object
-                def:
+                    enum: [count]
+                    example: count
+            required:
+                - type
+            additionalProperties: true
+
+        ComputeMetricRequest:
+            type: object
+            properties:
+                event:
                     type: object
                     properties:
-                        type:
+                        eventId:
                             type: string
-                            example: object
-                        shape:
+                            example: EV_GITHUB_COMMITS
+                        date:
+                            type: string
+                            format: date-time
+                            example: '2026-04-22T10:00:00.000Z'
+                        window:
+                            $ref: '#/components/schemas/Window'
+                        fetcherConfigs:
+                            type: array
+                            minItems: 1
+                            items:
+                                $ref: '#/components/schemas/FetcherConfig'
+                        processConfig:
                             type: object
-                            additionalProperties:
-                                type: object
-                                properties:
-                                    def:
-                                        type: object
-                                        properties:
-                                            type:
-                                                type: string
-                                                example: string
-                                            innerType:
-                                                type: object
-                                                nullable: true
-                                                properties:
-                                                    def:
-                                                        type: object
-                                                        properties:
-                                                            type:
-                                                                type: string
-                                                                example: string
-                                                    type:
-                                                        type: string
-                                                        example: string
-                                                    format:
-                                                        type: string
-                                                        nullable: true
-                                                    minLength:
-                                                        type: integer
-                                                        nullable: true
-                                                    maxLength:
-                                                        type: integer
-                                                        nullable: true
-                                    type:
-                                        type: string
-                                        example: string
-                                    format:
-                                        type: string
-                                        nullable: true
-                                    minLength:
-                                        type: integer
-                                        nullable: true
-                                    maxLength:
-                                        type: integer
-                                        nullable: true
-            example:
-                type: object
-                def:
+                            additionalProperties: true
+                            example:
+                                owner: governify
+                                repository: governify-next
+                    required:
+                        - eventId
+                        - date
+                        - window
+                        - fetcherConfigs
+                        - processConfig
+                aggregation:
+                    $ref: '#/components/schemas/AggregationConfig'
+            required:
+                - event
+                - aggregation
+
+        ComputedMetric:
+            type: object
+            properties:
+                value:
+                    type: number
+                    nullable: true
+                    example: 42
+                evidences:
+                    type: array
+                    items:
+                        type: object
+                        additionalProperties: true
+                metricConfig:
                     type: object
-                    shape:
-                        tag:
-                            def:
-                                type: string
-                            type: string
-                            format: null
-                            minLength: null
-                            maxLength: null
-                        branch:
-                            def:
-                                type: optional
-                                innerType:
-                                    def:
-                                        type: string
+                    properties:
+                        event:
+                            type: object
+                            properties:
+                                eventId:
                                     type: string
-                                    format: null
-                                    minLength: null
-                                    maxLength: null
-                            type: optional
-
-        # ── AuditConfig ─────────────────────────
-        AuditConfig:
-            type: object
-            description: Configuration for auditing metric processing
-            additionalProperties: true
-            example:
-                owner: 'johndoe'
-                repository: 'governify-next'
-
-        AuditConfigSchema:
-            type: object
-            description: JSON Schema for validating audit configuration (Zod-like structure)
-            properties:
-                type:
-                    type: string
-                    example: object
-                def:
-                    type: object
-                    properties:
-                        type:
-                            type: string
-                            example: object
-                        shape:
-                            type: object
-                            additionalProperties:
-                                type: object
-                                properties:
-                                    def:
-                                        type: object
-                                        properties:
-                                            type:
-                                                type: string
-                                                example: string
-                                    type:
-                                        type: string
-                                        example: string
-                                    format:
-                                        type: string
-                                        nullable: true
-                                    minLength:
-                                        type: integer
-                                        nullable: true
-                                    maxLength:
-                                        type: integer
-                                        nullable: true
-            example:
-                type: object
-                def:
-                    type: object
-                    shape:
-                        owner:
-                            def:
-                                type: string
-                            type: string
-                            format: null
-                            minLength: null
-                            maxLength: null
-                        repository:
-                            def:
-                                type: string
-                            type: string
-                            format: null
-                            minLength: null
-                            maxLength: null
+                                    example: EV_GITHUB_COMMITS
+                                fetcherConfigs:
+                                    type: array
+                                    items:
+                                        allOf:
+                                            - $ref: '#/components/schemas/FetcherConfig'
+                                            - type: object
+                                              properties:
+                                                  fetchResultId:
+                                                      type: string
+                                                      example: 67c9ff7b2ddf1b3940f9f321
+                                              required:
+                                                  - fetchResultId
+                                processConfig:
+                                    type: object
+                                    additionalProperties: true
+                            required:
+                                - eventId
+                                - fetcherConfigs
+                                - processConfig
+                        aggregation:
+                            $ref: '#/components/schemas/AggregationConfig'
+                    required:
+                        - event
+                        - aggregation
+            required:
+                - value
+                - evidences
+                - metricConfig
