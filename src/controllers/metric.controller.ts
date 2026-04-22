@@ -7,9 +7,9 @@ export const computeMetric = async (req: Request, res: Response, next: NextFunct
         const { event, aggregation } = req.body;
 
         const result = await metricService.computeMetric(
+            event.eventId,
             event.date,
             event.window,
-            event.eventId,
             event.fetcherConfigs,
             event.processConfig,
             aggregation,

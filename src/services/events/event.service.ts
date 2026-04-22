@@ -5,6 +5,7 @@ import { IFetch } from '../../types/fetch.js';
 import { IFetcherConfig } from '../../types/fetcherConfig.js';
 import { IProcessedEvent } from '../../types/processedEvent.js';
 import * as fetcherUtils from './utils/fetcher.util.js';
+import * as collectorIntegrations from '../../integrations/collector.integration.js';
 
 import {
     EV_GITHUB_COMMITS,
@@ -88,31 +89,58 @@ export const processEvent = async (
 
 export const validateEvent = async (
     eventId: string,
-    fetcherConfigs: Record<string, unknown>[],
-    processConfig: Record<string, unknown>,
+    fetcherConfigs?: IFetcherConfig[],
+    processConfig?: Record<string, unknown>,
 ): Promise<EventValidationResponse> => {
     const event = getEventById(eventId);
     if (!event) {
         return {
             valid: false,
-            error: `Event "${eventId}" not found`,
+            error: `Event ${eventId} not found`,
         };
     }
-    let fetcherConfigIssues: ZodError['issues'] = [];
+    const fetcherConfigIssues: FetcherConfigIssue[] = [];
     let processConfigIssues: ZodError['issues'] = [];
     if (fetcherConfigs) {
-        try {
-            event.fetcherConfigSchemas.forEach((fetcherConfigSchema) => {
-                const fetcherConfig = fetcherConfigs.find(
-                    (fc) => fc.fetcherId === fetcherConfigSchema.fetcherId,
+        const fetcherIdsNotFound: string[] = [];
+        event.fetcherIds.forEach((fetcherId) => {
+            const fetcherConfig = fetcherConfigs.find((fc) => fc.fetcherId === fetcherId);
+            if (!fetcherConfig) {
+                fetcherIdsNotFound.push(fetcherId);
+            }
+        });
+        if (fetcherIdsNotFound.length > 0) {
+            return {
+                valid: false,
+                error: `Missing fetcherConfig for fetcherIds: ${fetcherIdsNotFound.join(', ')}`,
+            };
+        }
+        for (const fetcherId of event.fetcherIds) {
+            const fetcherConfig = fetcherConfigs.find((fc) => fc.fetcherId === fetcherId)!;
+            try {
+                const validationResponse = await collectorIntegrations.validateFetcher(
+                    fetcherConfig.fetcherId,
+                    fetcherConfig.fetcherConfig,
                 );
-                fetcherConfigSchema.fetcherConfigSchema.parse(fetcherConfig?.config);
-            });
-        } catch (error) {
-            if (error instanceof ZodError) {
-                fetcherConfigIssues = error.issues;
-            } else {
-                throw error;
+                if (!validationResponse.data.valid) {
+                    const issues = Array.isArray(validationResponse.data.issues)
+                        ? (validationResponse.data.issues as ZodError['issues'])
+                        : [];
+                    fetcherConfigIssues.push(
+                        ...issues.map((issue) => ({ issue, fetcherId: fetcherConfig.fetcherId })),
+                    );
+                }
+            } catch (error) {
+                if (error instanceof ZodError) {
+                    fetcherConfigIssues.push(
+                        ...error.issues.map((issue) => ({
+                            issue,
+                            fetcherId: fetcherConfig.fetcherId,
+                        })),
+                    );
+                } else {
+                    throw error;
+                }
             }
         }
     }
@@ -141,7 +169,11 @@ export const validateEvent = async (
             valid: false,
             error: errorMessage,
             issues: [
-                ...fetcherConfigIssues.map((i) => ({ ...i, source: 'fetcherConfig' })),
+                ...fetcherConfigIssues.map(({ issue, fetcherId }) => ({
+                    ...issue,
+                    source: 'fetcherConfig',
+                    fetcherId,
+                })),
                 ...processConfigIssues.map((i) => ({ ...i, source: 'processConfig' })),
             ],
         };
@@ -152,4 +184,13 @@ export const validateEvent = async (
 
 type EventValidationResponse =
     | { valid: true }
-    | { valid: false; error: string; issues?: ZodError['issues'] };
+    | { valid: false; error: string; issues?: ValidationIssue[] };
+
+type FetcherConfigIssue = {
+    issue: ZodError['issues'][number];
+    fetcherId: string;
+};
+
+type ValidationIssue = (ZodError['issues'][number] & { source: string }) & {
+    fetcherId?: string;
+};

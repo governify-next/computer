@@ -9,14 +9,7 @@ export const EV_BLUEJAY_LOGS_BY_NUMBER: IEvent = {
         example:
             'If 8 log messages contain the configured number in the selected window, the metric value would be 8.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'numberToSearch',
-            fetcherConfigSchema: z.object({
-                number: z.number(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_REST_BLUEJAY_LOGS'],
     processConfigSchema: z.object({}),
     process(_date, _window, _fetchs, _processConfig) {
         const events: Record<string, unknown>[] = [];
@@ -33,14 +26,7 @@ export const EV_BLUEJAY_LOGS_BY_LEVEL: IEvent = {
         example:
             'If the microservice generated 50 INFO logs in the last month, the metric value would be 50.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'levelToSearch',
-            fetcherConfigSchema: z.object({
-                level: z.string().refine((value) => ['INFO', 'WARN', 'ERROR'].includes(value)),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_REST_BLUEJAY_LOGS'],
     processConfigSchema: z.object({}),
     process(_date, _window, _fetchs, _processConfig) {
         const events: Record<string, unknown>[] = [];

@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import { metricRoutes } from './routes/metric.routes.js';
 import { eventRoutes } from './routes/event.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
+import { isAuthenticated } from './middlewares/authentication.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
@@ -19,8 +20,8 @@ const swaggerDocument = YAML.load(swaggerPath);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(healthRoutes);
-app.use('/api/v1', eventRoutes);
-app.use('/api/v1', metricRoutes);
+app.use('/api/v1', isAuthenticated, eventRoutes);
+app.use('/api/v1', isAuthenticated, metricRoutes);
 app.use(errorHandler);
 
 export default app;
