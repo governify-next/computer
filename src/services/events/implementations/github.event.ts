@@ -36,20 +36,13 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
         description:
             'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository.',
         example:
-            'If columns is ["In progress"] and there are 5 issues in that column, the metric value would be 5.',
+            'If columns is ["In Progress"] and there are 5 issues in that column, the metric value would be 5.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns } = processConfig as { columns: string[] }; // por usar unknown en event. Podría eliminarse con any pero salta lint
@@ -66,20 +59,13 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
         description:
             'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one branch linked to them.',
         example:
-            'If columns is ["In progress"], 5 issues are in that column and 3 have an associated branch, the metric value would be 3.',
+            'If columns is ["In Progress"], 5 issues are in that column and 3 have an associated branch, the metric value would be 3.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns } = processConfig as { columns: string[] };
@@ -99,20 +85,13 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
         description:
             'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one associated pull request in the specified PR state.',
         example:
-            'If columns is ["In review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
+            'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
         status: z.enum(['OPEN', 'CLOSED', 'MERGED']),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
@@ -136,20 +115,13 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
         description:
             'Number of distinct branch names linked to issues in the specified status columns of the GitHub ProjectV2. Branches shared across multiple issues are counted once.',
         example:
-            'If columns is ["In progress"] and 3 issues link to [feat/a, feat/b], [feat/a] and [feat/c], the metric value would be 3 (feat/a, feat/b, feat/c).',
+            'If columns is ["In Progress"] and 3 issues link to [feat/a, feat/b], [feat/a] and [feat/c], the metric value would be 3 (feat/a, feat/b, feat/c).',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns } = processConfig as { columns: string[] };
@@ -173,20 +145,13 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_ASSOCIATED_TO_MEMBER: IEvent = {
         description:
             'Number of issues in the specified status columns of the GitHub ProjectV2 that are assigned to a specific member.',
         example:
-            'If columns is ["In progress"] and the member has 2 issues assigned in that column, the metric value would be 2.',
+            'If columns is ["In Progress"] and the member has 2 issues assigned in that column, the metric value would be 2.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
         username: z.string(),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
@@ -210,18 +175,11 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_T
         example:
             'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PROJECTV2_ITEMS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(z.enum(['In progress', 'In review', 'Done', 'Closed'])),
+        columns: z.array(
+            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
+        ),
         username: z.string(),
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
@@ -257,16 +215,7 @@ export const EV_GITHUB_PR_MERGED: IEvent = {
         example:
             'If 10 PRs were merged this week and username is "alice", only the PRs merged by alice are counted.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PULL_REQUESTS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: z.string().optional(),
     }),
@@ -301,16 +250,7 @@ export const EV_GITHUB_MERGED_PR_BY_REVIEW_STATE: IEvent = {
         example:
             'If 10 PRs were merged this week, reviewState is "APPROVED" and username is "alice", only the PRs merged by alice with at least one approved review are counted.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PULL_REQUESTS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: z.string().optional(),
         reviewState: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED', 'DISMISSED', 'PENDING']),
@@ -346,16 +286,7 @@ export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
         example:
             'If username is "alice", the window is this week, and there are 8 PRs by others, 3 OPEN and 5 MERGED of which 4 overlapped the window, the metric value would be 7.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PULL_REQUESTS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: z.string(),
     }),
@@ -394,16 +325,7 @@ export const EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER: IEvent = {
         example:
             'If username is "alice", there are 7 reviewable PRs from others, and alice commented on 3 of them during the window, the metric value would be 3.',
     },
-    fetcherConfigSchemas: [
-        {
-            fetcherId: 'FT_GQL_GITHUB_PULL_REQUESTS',
-            fetcherConfigSchema: z.object({
-                owner: z.string(),
-                repository: z.string(),
-                token: z.string(),
-            }),
-        },
-    ],
+    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: z.string(),
     }),
