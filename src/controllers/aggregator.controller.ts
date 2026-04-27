@@ -24,12 +24,9 @@ export const getAggregatorById = async (req: Request, res: Response, next: NextF
 export const validateAggregator = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { aggregatorType } = req.params;
-        const { aggregationConfig } = req.body;
+        const { aggregatorConfig } = req.body;
 
-        const result = await aggregatorService.validateAggregator(
-            aggregatorType,
-            aggregationConfig,
-        );
+        const result = await aggregatorService.validateAggregator(aggregatorType, aggregatorConfig);
         if (!result.valid) {
             return sendSuccess(res, {
                 data: result,

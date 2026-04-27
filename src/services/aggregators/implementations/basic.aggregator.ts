@@ -25,7 +25,7 @@ export const average: IAggregator = {
             'If the events have values 10, 20, and 30 for the specified field, the average will be 20.',
     },
     aggregatorConfigSchema: z.object({
-        numericFieldPath: z.string().nonempty().describe('Example: event.comments.number'),
+        numericFieldPath: z.string().describe('Example: event.comments.number'),
     }),
     aggregate(events, aggregatorConfig) {
         const numericFieldPath = aggregatorConfig.numericFieldPath as string;
@@ -54,7 +54,7 @@ export const sum: IAggregator = {
             'If the events have values 10, 20, and 30 for the specified field, the sum will be 60.',
     },
     aggregatorConfigSchema: z.object({
-        numericFieldPath: z.string().nonempty().describe('Example: event.comments.number'),
+        numericFieldPath: z.string().describe('Example: event.comments.number'),
     }),
     aggregate(events, aggregatorConfig) {
         const numericFieldPath = aggregatorConfig.numericFieldPath as string;
@@ -82,7 +82,7 @@ export const max: IAggregator = {
             'If the events have values 10, 20, and 30 for the specified field, the maximum will be 30.',
     },
     aggregatorConfigSchema: z.object({
-        numericFieldPath: z.string().nonempty().describe('Example: event.comments.number'),
+        numericFieldPath: z.string().describe('Example: event.comments.number'),
     }),
     aggregate(events, aggregatorConfig) {
         const numericFieldPath = aggregatorConfig.numericFieldPath as string;
@@ -110,7 +110,7 @@ export const min: IAggregator = {
             'If the events have values 10, 20, and 30 for the specified field, the minimum will be 10.',
     },
     aggregatorConfigSchema: z.object({
-        numericFieldPath: z.string().nonempty().describe('Example: event.comments.number'),
+        numericFieldPath: z.string().describe('Example: event.comments.number'),
     }),
     aggregate(events, aggregatorConfig) {
         const numericFieldPath = aggregatorConfig.numericFieldPath as string;
@@ -138,7 +138,7 @@ export const median: IAggregator = {
             'If the events have values 10, 20, and 30 for the specified field, the median will be 20.',
     },
     aggregatorConfigSchema: z.object({
-        numericFieldPath: z.string().nonempty().describe('Example: event.comments.number'),
+        numericFieldPath: z.string().describe('Example: event.comments.number'),
     }),
     aggregate(events, aggregatorConfig) {
         const numericFieldPath = aggregatorConfig.numericFieldPath as string;
