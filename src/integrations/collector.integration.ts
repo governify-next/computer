@@ -27,6 +27,21 @@ export const validateFetcher = async (
     return data;
 };
 
+// Function to get fetch result by ID -------------------------------------------
+const getFetchResultByFetcherIdAndFetchResultId = async (
+    fetcherId: string,
+    fetchResultId: string,
+) => {
+    const response = await fetch(
+        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
+        {
+            method: 'GET',
+            headers: collectorAuthHeaders,
+        },
+    );
+    return parseCollectorResponse(response);
+};
+
 // Function to generate fetch result and poll for completion -------------------
 export const generateFetchResult = async (
     fetcherId: string,
@@ -69,17 +84,6 @@ const parseCollectorResponse = async (response: Response) => {
     return data;
 };
 
-const getFetchResult = async (fetcherId: string, fetchResultId: string) => {
-    const response = await fetch(
-        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
-        {
-            method: 'GET',
-            headers: collectorAuthHeaders,
-        },
-    );
-    return parseCollectorResponse(response);
-};
-
 const waitForFetchResultCompletion = async (
     fetcherId: string,
     initialResponse: FetchResultResponse,
@@ -87,7 +91,10 @@ const waitForFetchResultCompletion = async (
     const fetchResultId = initialResponse.data._id;
     for (let attempt = 1; attempt <= fetchResultPollingConfig.maxAttempts; attempt++) {
         await delay(fetchResultPollingConfig.intervalMs);
-        const pollResponse = await getFetchResult(fetcherId, fetchResultId);
+        const pollResponse = await getFetchResultByFetcherIdAndFetchResultId(
+            fetcherId,
+            fetchResultId,
+        );
         if (pollResponse.data.status === 'COMPLETED' || pollResponse.data.status === 'FAILED')
             return pollResponse;
     }
