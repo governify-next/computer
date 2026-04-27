@@ -6,6 +6,8 @@ import {
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
     validateProcessConfig,
+    validateAggregatorType,
+    validateAggregatorConfig,
 } from '../middlewares/metric.validator.js';
 import { validateCollectorHealth } from '../middlewares/collector.validator.js';
 
@@ -19,5 +21,7 @@ metricRoutes.post(
     validateProvidedFetcherConfigs,
     validateFetcherConfigs,
     validateProcessConfig,
+    validateAggregatorType,
+    validateAggregatorConfig,
     metricController.computeMetric,
 );

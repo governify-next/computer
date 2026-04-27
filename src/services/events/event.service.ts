@@ -41,27 +41,6 @@ export const events: Record<string, IEvent> = {
     EV_BLUEJAY_LOGS_BY_NUMBER,
 };
 
-// This function injects the stringified version of the process function into each event for documentation purposes
-const injectProcessScriptStringToEvent = (
-    events: Record<string, IEvent>,
-): Record<string, IEvent> => {
-    Object.values(events).forEach((event) => {
-        event.processScript = event.process.toString();
-    });
-    return events;
-};
-injectProcessScriptStringToEvent(events);
-
-export type EventId = keyof typeof events;
-export const getEventById = (eventId: string): IEvent => {
-    const event = events[eventId as EventId];
-    return event;
-};
-
-export const getEvents = (): IEvent[] => {
-    return Object.values(events);
-};
-
 export const processEvent = async (
     eventId: string,
     date: Date,
@@ -85,6 +64,25 @@ export const processEvent = async (
         fetchs,
         processConfig,
     };
+};
+
+// This function injects the stringified version of the process function into each event for documentation purposes
+const injectProcessScriptStringToEvent = (
+    events: Record<string, IEvent>,
+): Record<string, IEvent> => {
+    Object.values(events).forEach((event) => {
+        event.processScript = event.process.toString();
+    });
+    return events;
+};
+injectProcessScriptStringToEvent(events);
+
+export const getEventById = (eventId: string): IEvent => {
+    return events[eventId];
+};
+
+export const getEvents = (): IEvent[] => {
+    return Object.values(events);
 };
 
 export const validateEvent = async (

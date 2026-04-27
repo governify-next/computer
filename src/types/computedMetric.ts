@@ -1,3 +1,5 @@
+import { IAggregation } from './aggregation.js';
+
 export interface IComputedMetric {
     value: number | null;
     evidences: Record<string, unknown>[];
@@ -11,9 +13,6 @@ export interface IComputedMetric {
             }[];
             processConfig: Record<string, unknown>;
         };
-        aggregation: {
-            type: string;
-            [key: string]: unknown;
-        };
+        aggregation: IAggregation;
     };
 }

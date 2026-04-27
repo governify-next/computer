@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { metricRoutes } from './routes/metric.routes.js';
 import { eventRoutes } from './routes/event.routes.js';
+import { aggregatorRoutes } from './routes/aggregator.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
 import { isAuthenticated } from './middlewares/authentication.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -22,6 +23,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(healthRoutes);
 app.use('/api/v1', isAuthenticated, eventRoutes);
 app.use('/api/v1', isAuthenticated, metricRoutes);
+app.use('/api/v1', isAuthenticated, aggregatorRoutes);
 app.use(errorHandler);
 
 export default app;

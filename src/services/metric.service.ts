@@ -2,10 +2,10 @@ import { IWindow } from '../types/window.js';
 import { IFetcherConfig } from '../types/fetcherConfig.js';
 import { IFetch } from '../types/fetch.js';
 import { IAggregationResult } from '../types/aggregationResult.js';
-import { IAggregation } from '../types/aggregationConfig.js';
+import { IAggregation } from '../types/aggregation.js';
 import { IComputedMetric } from '../types/computedMetric.js';
 import { IProcessedEvent } from '../types/processedEvent.js';
-import * as aggregationUtils from './utils/aggregation.util.js';
+import * as aggregatorService from './aggregators/aggregator.service.js';
 import * as eventService from './events/event.service.js';
 
 export const computeMetric = async (
@@ -28,7 +28,7 @@ export const computeMetric = async (
     const fetchs: IFetch[] = processedEvent.fetchs;
 
     // Step 2: Aggregate the main events using the specified aggregation method to compute the final metric value
-    const aggregationResult: IAggregationResult = aggregationUtils.aggregateMainEvents(
+    const aggregationResult: IAggregationResult = aggregatorService.aggregateEvents(
         mainEvents,
         aggregation,
     );

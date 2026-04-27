@@ -3,6 +3,7 @@ import { type Request, type Response, type NextFunction } from 'express';
 import { NotFoundError, ValidationError } from '../utils/customErrors.js';
 import { ZodError } from 'zod';
 import * as eventService from '../services/events/event.service.js';
+import * as aggregatorService from '../services/aggregators/aggregator.service.js';
 import * as collectorIntegration from '../integrations/collector.integration.js';
 
 // ─── Express-validator ─────────────────────────────
@@ -84,11 +85,15 @@ const aggregationValidation = [
         .withMessage('aggregation is required')
         .isObject()
         .withMessage('aggregation must be an object'),
-    body('aggregation.type')
+    body('aggregation.aggregatorType')
         .exists({ checkNull: true })
-        .withMessage('aggregation.type is required')
-        .isIn(['count'])
-        .withMessage('aggregation.type must be one of: count'),
+        .withMessage('aggregation.aggregatorType is required')
+        .isString()
+        .withMessage('aggregation.aggregatorType must be a string'),
+    body('aggregation.aggregatorConfig')
+        .exists({ checkNull: true })
+        .isObject()
+        .withMessage('aggregation.aggregatorConfig must be an object'),
 ];
 
 export const validateEventId = async (req: Request, res: Response, next: NextFunction) => {
@@ -167,6 +172,40 @@ export const validateProcessConfig = async (req: Request, res: Response, next: N
         } catch (error) {
             if (error instanceof ZodError) {
                 return next(new ValidationError('Invalid processConfig', { issues: error.issues }));
+            } else {
+                throw error;
+            }
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const validateAggregatorType = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { aggregatorType } = req.body.aggregation;
+        const aggregator = aggregatorService.getAggregatorByType(aggregatorType);
+        if (!aggregator) {
+            return next(new NotFoundError(`Aggregator ${aggregatorType} not found`));
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const validateAggregatorConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { aggregatorType, aggregatorConfig } = req.body.aggregation;
+        const aggregator = aggregatorService.getAggregatorByType(aggregatorType);
+        try {
+            aggregator.aggregatorConfigSchema.parse(aggregatorConfig);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return next(
+                    new ValidationError('Invalid aggregatorConfig', { issues: error.issues }),
+                );
             } else {
                 throw error;
             }
