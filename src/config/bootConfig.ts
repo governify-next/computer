@@ -32,4 +32,12 @@ export const bootEnv = {
         process.env.REDIS_SLOW_RECONNECTION_MAX_RETRIES || '10',
     ),
     REDIS_RETRY_SLOW_DELAY_MS: Number(process.env.REDIS_RETRY_SLOW_DELAY_MS || '10000'),
+
+    // Fetch Result polling configuration
+    FETCH_RESULT_POLLING_MAX_ATTEMPTS: Number(
+        process.env.FETCH_RESULT_POLLING_MAX_ATTEMPTS || '300',
+    ),
+    FETCH_RESULT_POLLING_INTERVAL_MS: Number(
+        process.env.FETCH_RESULT_POLLING_INTERVAL_MS || '1000',
+    ),
 };
