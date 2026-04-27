@@ -1,8 +1,7 @@
-export const getValueByPath = (obj: unknown, path: string[]) => {
-    let current: unknown = obj;
+export const getValueByPath = (object: unknown, path: string[]) => {
     for (const key of path) {
-        if (current == null || typeof current !== 'object') return undefined;
-        current = (current as Record<string, unknown>)[key];
+        if (object == null || typeof object !== 'object') return undefined;
+        object = (object as Record<string, unknown>)[key];
     }
-    return current;
+    return object;
 };
