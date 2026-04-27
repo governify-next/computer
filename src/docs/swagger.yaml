@@ -8,9 +8,10 @@ servers:
     - url: /
 
 tags:
-    - { name: Health, description: Server health check }
-    - { name: Events, description: Event catalog, processing and validation }
-    - { name: Metrics, description: Metric computation }
+    - { name: Health, description: 'Server health check' }
+    - { name: Metrics, description: 'Metric computation' }
+    - { name: Events, description: 'Event catalog, processing and validation' }
+    - { name: Aggregators, description: 'Aggregator catalog and validation' }
 
 paths:
     # ──────────────────────────────────────────────
@@ -29,6 +30,41 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/HealthResponse'
+
+    # ──────────────────────────────────────────────
+    # Metrics
+    # ──────────────────────────────────────────────
+    /api/v1/metric/compute:
+        post:
+            tags:
+                - Metrics
+            summary: Compute metric
+            operationId: computeMetric
+            description: Processes an event and applies aggregation to compute a metric value.
+            security:
+                - BearerAuth: []
+            requestBody:
+                $ref: '#/components/requestBodies/ComputeMetricBody'
+            responses:
+                '200':
+                    description: Metric computed successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/ComputedMetric'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
 
     # ──────────────────────────────────────────────
     # Events
@@ -161,22 +197,20 @@ paths:
                     $ref: '#/components/responses/InternalError'
 
     # ──────────────────────────────────────────────
-    # Metrics
+    # Aggregators
     # ──────────────────────────────────────────────
-    /api/v1/metric/compute:
-        post:
+    /api/v1/aggregators:
+        get:
             tags:
-                - Metrics
-            summary: Compute metric
-            operationId: computeMetric
-            description: Processes an event and applies aggregation to compute a metric value.
+                - Aggregators
+            summary: Get all aggregators
+            operationId: getAggregators
+            description: Returns all available aggregation definitions.
             security:
                 - BearerAuth: []
-            requestBody:
-                $ref: '#/components/requestBodies/ComputeMetricBody'
             responses:
                 '200':
-                    description: Metric computed successfully.
+                    description: Aggregators retrieved successfully.
                     content:
                         application/json:
                             schema:
@@ -185,13 +219,73 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              $ref: '#/components/schemas/ComputedMetric'
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/Aggregator'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/aggregators/{aggregatorType}:
+        parameters:
+            - $ref: '#/components/parameters/aggregatorType'
+        get:
+            tags:
+                - Aggregators
+            summary: Get aggregator by type
+            operationId: getAggregatorByType
+            description: Returns one aggregation definition by type.
+            security:
+                - BearerAuth: []
+            responses:
+                '200':
+                    description: Aggregator retrieved successfully.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/Aggregator'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/aggregators/{aggregatorType}/validate:
+        parameters:
+            - $ref: '#/components/parameters/aggregatorType'
+        post:
+            tags:
+                - Aggregators
+            summary: Validate aggregator configuration
+            operationId: validateAggregator
+            description: Validates an optional aggregator configuration for the selected aggregator.
+            security:
+                - BearerAuth: []
+            requestBody:
+                $ref: '#/components/requestBodies/ValidateAggregatorBody'
+            responses:
+                '200':
+                    description: Validation executed.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/AggregatorValidationResult'
                 '401':
                     $ref: '#/components/responses/Unauthorized'
                 '400':
                     $ref: '#/components/responses/ValidationError'
-                '404':
-                    $ref: '#/components/responses/NotFound'
                 '500':
                     $ref: '#/components/responses/InternalError'
 
@@ -221,6 +315,15 @@ components:
                 type: boolean
                 default: false
                 example: false
+        aggregatorType:
+            name: aggregatorType
+            in: path
+            required: true
+            description: Aggregator type.
+            schema:
+                type: string
+                enum: [count, average, sum, max, min, median]
+                example: count
 
     # ── Request Bodies ────────────────────────
     requestBodies:
@@ -245,6 +348,13 @@ components:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/ComputeMetricRequest'
+        ValidateAggregatorBody:
+            description: Request body for aggregator validation (all fields optional)
+            required: true
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ValidateAggregatorRequest'
 
     # ── Responses ─────────────────────────────
     responses:
@@ -448,6 +558,43 @@ components:
                 - fetcherIds
                 - processConfigSchema
 
+        Aggregator:
+            type: object
+            description: Aggregation definition currently available in the service.
+            properties:
+                type:
+                    type: string
+                    enum: [count, average, sum, max, min, median]
+                    example: count
+                moreInfo:
+                    type: object
+                    properties:
+                        title:
+                            type: string
+                            example: Count
+                        description:
+                            type: string
+                            example: Counts the number of main events.
+                        example:
+                            type: string
+                            example: If there are 5 main events, the value will be 5.
+                    required:
+                        - title
+                        - description
+                        - example
+                aggregatorConfigSchema:
+                    type: object
+                    description: Serialized zod schema used to validate aggregatorConfig.
+                    additionalProperties: true
+                aggregateScript:
+                    type: string
+                    nullable: true
+                    description: Stringified aggregate function for documentation/debugging.
+            required:
+                - type
+                - moreInfo
+                - aggregatorConfigSchema
+
         FetcherConfig:
             type: object
             properties:
@@ -557,6 +704,16 @@ components:
                     example:
                         owner: governify
                         repository: governify-next
+
+        ValidateAggregatorRequest:
+            type: object
+            description: aggregatorConfig is optional and is validated against the selected aggregator schema when present.
+            properties:
+                aggregatorConfig:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        numericFieldPath: event.comments.number
 
         ProcessedEventSummary:
             type: object
@@ -676,16 +833,64 @@ components:
                       - valid
                       - error
 
+        AggregatorValidationIssue:
+            type: object
+            description: Validation issue from aggregatorConfig.
+            properties:
+                code:
+                    type: string
+                    example: invalid_type
+                message:
+                    type: string
+                    example: Required
+                path:
+                    type: array
+                    items:
+                        oneOf:
+                            - type: string
+                            - type: integer
+
+        AggregatorValidationResult:
+            oneOf:
+                - type: object
+                  properties:
+                      valid:
+                          type: boolean
+                          enum: [true]
+                          example: true
+                  required:
+                      - valid
+                - type: object
+                  properties:
+                      valid:
+                          type: boolean
+                          enum: [false]
+                          example: false
+                      error:
+                          type: string
+                          example: Invalid aggregatorConfig
+                      issues:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/AggregatorValidationIssue'
+                  required:
+                      - valid
+                      - error
+
         AggregationConfig:
             type: object
             properties:
-                type:
+                aggregatorType:
                     type: string
-                    enum: [count]
+                    enum: [count, average, sum, max, min, median]
                     example: count
+                aggregatorConfig:
+                    type: object
+                    additionalProperties: true
+                    example: {}
             required:
-                - type
-            additionalProperties: true
+                - aggregatorType
+                - aggregatorConfig
 
         ComputeMetricRequest:
             type: object
