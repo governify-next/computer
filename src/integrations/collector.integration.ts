@@ -49,7 +49,7 @@ export const generateFetchResult = async (
     fetcherConfig: Record<string, unknown>,
 ) => {
     const response = await fetch(
-        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/generate`,
+        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
         {
             method: 'POST',
             headers: collectorAuthHeaders,
