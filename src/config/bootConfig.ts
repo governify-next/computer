@@ -10,10 +10,10 @@ export const bootEnv = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     GOV_LOG_LEVEL: process.env.GOV_LOG_LEVEL || 'INFO',
     GOV_SERVICE_NAME: process.env.GOV_SERVICE_NAME || 'computer',
-    PORT: process.env.PORT || '5901',
+    PORT: process.env.PORT || '5903',
 
     // Internal service URLs
-    COLLECTOR_SERVICE_URL: process.env.COLLECTOR_SERVICE_URL || 'http://localhost:5902',
+    COLLECTOR_SERVICE_URL: process.env.COLLECTOR_SERVICE_URL || 'http://localhost:5904',
 
     // Database URIs
     MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/governify',
