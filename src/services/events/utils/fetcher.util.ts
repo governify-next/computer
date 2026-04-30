@@ -8,7 +8,7 @@ export const fetchDataForEvent = async (
 ): Promise<IFetch[]> => {
     const fetchs: IFetch[] = await Promise.all(
         fetcherConfigs.map(async (fetcherConfig) => {
-            const data = await collectorIntegration.generateFetchResult(
+            const fetchResult = await collectorIntegration.generateFetchResult(
                 fetcherConfig.fetcherId,
                 date,
                 fetcherConfig.fetcherConfig,
@@ -16,8 +16,8 @@ export const fetchDataForEvent = async (
             return {
                 fetcherId: fetcherConfig.fetcherId,
                 fetcherConfig: fetcherConfig.fetcherConfig,
-                fetchResultId: data.data._id,
-                data: data.data.data,
+                fetchResultId: fetchResult._id,
+                data: fetchResult.data,
             };
         }),
     );

@@ -1,14 +1,20 @@
-import jwt from 'jsonwebtoken';
 import { bootEnv } from '../config/bootConfig.js';
+import { serviceHeaders } from '../utils/serviceAuth.js';
+import { FetchError, ExternalServiceError } from '../utils/customErrors.js';
 
-const collectorServiceUrl = bootEnv.COLLECTOR_SERVICE_URL;
-const collectorAuthToken = jwt.sign(
-    { service: bootEnv.GOV_SERVICE_NAME, type: 'service-token' },
-    bootEnv.JWT_SECRET,
-);
-const collectorAuthHeaders = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${collectorAuthToken}`,
+const COLLECTOR_SERVICE_URL = bootEnv.COLLECTOR_SERVICE_URL;
+
+// Function to check health of collector service --------------------------------
+export const checkHealth = async (): Promise<boolean> => {
+    try {
+        const response = await fetch(`${COLLECTOR_SERVICE_URL}/health`, {
+            method: 'GET',
+        });
+        const result = await response.json();
+        return result;
+    } catch {
+        return false;
+    }
 };
 
 // Function to validate fetcher configuration -----------------------------------
@@ -16,15 +22,18 @@ export const validateFetcher = async (
     fetcherId: string,
     fetcherConfig: Record<string, unknown>,
 ) => {
-    const response = await fetch(`${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/validate`, {
+    const response = await fetch(`${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/validate`, {
         method: 'POST',
-        headers: collectorAuthHeaders,
+        headers: serviceHeaders,
         body: JSON.stringify({
             fetcherConfig: fetcherConfig,
         }),
     });
-    const data = await response.json();
-    return data;
+    const result = await response.json();
+
+    if (!result.success) throw new ExternalServiceError(`Fetcher configuration validation failed`);
+
+    return result;
 };
 
 // Function to get fetch result by ID -------------------------------------------
@@ -33,13 +42,20 @@ const getFetchResultByFetcherIdAndFetchResultId = async (
     fetchResultId: string,
 ) => {
     const response = await fetch(
-        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
+        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
         {
             method: 'GET',
-            headers: collectorAuthHeaders,
+            headers: serviceHeaders,
         },
     );
-    return parseCollectorResponse(response);
+    const result = await response.json();
+
+    if (!result.success)
+        throw new FetchError(
+            `Failed to fetch fetch result with ID ${fetchResultId} for fetcher ${fetcherId}`,
+        );
+
+    return result;
 };
 
 // Function to generate fetch result and poll for completion -------------------
@@ -49,19 +65,26 @@ export const generateFetchResult = async (
     fetcherConfig: Record<string, unknown>,
 ) => {
     const response = await fetch(
-        `${collectorServiceUrl}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
+        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
         {
             method: 'POST',
-            headers: collectorAuthHeaders,
+            headers: serviceHeaders,
             body: JSON.stringify({
                 date,
                 fetcherConfig: fetcherConfig,
             }),
         },
     );
-    const data = await parseCollectorResponse(response);
-    if (data.data.status === 'IN_PROGRESS') return waitForFetchResultCompletion(fetcherId, data);
-    return data;
+    const result = await response.json();
+
+    if (!result.success)
+        throw new ExternalServiceError(
+            `Failed to initiate fetch result generation for fetcher ${fetcherId}`,
+        );
+
+    if (result.data.status === 'IN_PROGRESS')
+        return waitForFetchResultCompletion(fetcherId, result);
+    return result.data;
 };
 
 const fetchResultPollingConfig = {
@@ -79,11 +102,6 @@ interface FetchResultResponse {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const parseCollectorResponse = async (response: Response) => {
-    const data = await response.json();
-    return data;
-};
-
 const waitForFetchResultCompletion = async (
     fetcherId: string,
     initialResponse: FetchResultResponse,
@@ -96,18 +114,11 @@ const waitForFetchResultCompletion = async (
             fetchResultId,
         );
         if (pollResponse.data.status === 'COMPLETED' || pollResponse.data.status === 'FAILED')
-            return pollResponse;
-    }
-};
-
-export const checkHealth = async (): Promise<boolean> => {
-    try {
-        const response = await fetch(`${collectorServiceUrl}/health`, {
-            method: 'GET',
-        });
-        const data = await response.json();
-        return data;
-    } catch {
-        return false;
+            return pollResponse.data;
+        if (attempt === fetchResultPollingConfig.maxAttempts) {
+            throw new FetchError(
+                `Fetch result generation for fetcher ${fetcherId} did not complete within expected time`,
+            );
+        }
     }
 };
