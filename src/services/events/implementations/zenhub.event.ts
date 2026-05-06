@@ -163,7 +163,7 @@ export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
 
         for (const issue of matchedGithubIssues) {
             let issueAdded = false;
-
+            // TODO: se puede integrar con el evento de zenhub que comparte lógica interna
             for (const branch of issue.linkedBranches.nodes) {
                 const branchName = branch.ref?.name;
                 if (!branchName || knownBranches.has(branchName)) continue; // Algunas issues pueden venir con ref a null que github no puede resolver

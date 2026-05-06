@@ -111,9 +111,9 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     moreInfo: {
         title: 'Distinct Branches by Status',
         description:
-            'Number of distinct branch names linked to issues in the specified status columns of the GitHub ProjectV2. Branches shared across multiple issues are counted once.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that contribute at least one branch not already seen in previous matching issues.',
         example:
-            'If columns is ["In Progress"] and 3 issues link to [feat/a, feat/b], [feat/a] and [feat/c], the metric value would be 3 (feat/a, feat/b, feat/c).',
+            'If columns is ["In Progress"] with issues is1->[feat/a], is2->[feat/a] and is3->[feat/b], the metric value would be 2.',
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
@@ -124,14 +124,25 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns } = processConfig as { columns: string[] };
         const issues = getProjectIssues(fetchs);
-        const uniqueBranches = new Set(
-            issues
-                .filter((issue) => isIssueAtAnyStatus(issue, columns))
-                .flatMap((issue) =>
-                    issue.content.linkedBranches.nodes.map((branch) => branch.ref.name),
-                ),
-        );
-        return [...uniqueBranches].map((name) => ({ branch: name }));
+        const knownBranches = new Set<string>();
+        const issuesWithDifferentBranches: ProjectIssue[] = [];
+        // TODO: se puede integrar con el evento de zenhub que comparte lógica interna
+        for (const issue of issues.filter((issue) => isIssueAtAnyStatus(issue, columns))) {
+            let issueAdded = false;
+
+            for (const branch of issue.content.linkedBranches.nodes) {
+                const branchName = branch.ref?.name;
+                if (!branchName || knownBranches.has(branchName)) continue;
+
+                knownBranches.add(branchName);
+                if (!issueAdded) {
+                    issuesWithDifferentBranches.push(issue);
+                    issueAdded = true;
+                }
+            }
+        }
+
+        return issuesWithDifferentBranches;
     },
 };
 
