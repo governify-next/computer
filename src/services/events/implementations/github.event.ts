@@ -1,13 +1,24 @@
 import { z } from 'zod';
 import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
-import {
-    getProjectIssues,
-    getPullRequests,
-    isIssueAtAnyStatus,
-} from '../utils/github.event.util.js';
-import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
 import { getFetchByFetcherId } from '../utils/fetcher.util.js';
+import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
+import { ProjectIssue, PullRequest } from '../../../types/github.event.js';
+
+const getProjectIssues = (fetchs: IFetch[]): ProjectIssue[] => {
+    const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
+        .data as ProjectIssue[];
+    return items.filter((item) => item.content?.__typename === 'Issue');
+};
+
+const getPullRequests = (fetchs: IFetch[]): PullRequest[] => {
+    return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as PullRequest[];
+};
+
+const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean => {
+    const status = issue.fieldValues.nodes.find((node) => node.field?.name === 'Status')?.name;
+    return status != null && statuses.includes(status);
+};
 
 export const EV_GITHUB_COMMITS: IEvent = {
     id: 'EV_GITHUB_COMMITS',
@@ -19,8 +30,7 @@ export const EV_GITHUB_COMMITS: IEvent = {
     },
     fetcherIds: ['FT_REST_GITHUB_COMMITS'],
     processConfigSchema: z.object({
-        owner: z.string(),
-        repository: z.string(),
+        tag: z.string(),
     }),
     process(_date, _window, fetchs, _processConfig): Record<string, unknown>[] {
         const commitsFetch: IFetch = getFetchByFetcherId('FT_REST_GITHUB_COMMITS', fetchs);
@@ -45,7 +55,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
         ),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] }; // por usar unknown en event. Podría eliminarse con any pero salta lint
+        const { columns } = processConfig as { columns: string[] };
         const issues = getProjectIssues(fetchs);
         return issues.filter((issue) => isIssueAtAnyStatus(issue, columns));
     },
@@ -101,7 +111,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
             (issue) =>
                 isIssueAtAnyStatus(issue, columns) &&
                 issue.content.closedByPullRequestsReferences.nodes.some(
-                    (pr) => pr.state === processConfig.status, // con comparaciones no salta el uso de unknown
+                    (pr) => pr.state === processConfig.status,
                 ),
         );
     },

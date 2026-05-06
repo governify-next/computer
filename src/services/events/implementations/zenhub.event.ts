@@ -3,29 +3,9 @@ import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
 import { getFetchByFetcherId } from '../utils/fetcher.util.js';
 import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
+import { GithubIssue, ZenhubData, ZenhubIssue } from '../../../types/zenhub.event.js';
 
 const zenhubColumnsSchema = z.array(z.enum(['In Progress', 'In Review', 'Done', 'Closed']));
-
-type ZenhubIssue = {
-    number: number;
-    createdAt: string;
-    updatedAt: string;
-    assignees: { nodes: Array<{ login: string }> };
-};
-
-type ZenhubData = {
-    pipelines: Array<{ name: string; issues: ZenhubIssue[] }>;
-    closedIssues: ZenhubIssue[];
-};
-
-type GithubIssue = {
-    number: number;
-    createdAt: string;
-    linkedBranches: { nodes: Array<{ ref: { name: string } }> };
-    closedByPullRequestsReferences: {
-        nodes: Array<{ state: 'OPEN' | 'CLOSED' | 'MERGED' }>;
-    };
-};
 
 const getZenhubData = (fetchs: IFetch[]): ZenhubData => {
     return getFetchByFetcherId('FT_GQL_ZENHUB_ISSUES', fetchs).data as ZenhubData;
