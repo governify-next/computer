@@ -20,44 +20,32 @@ const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean =>
     return status != null && statuses.includes(status);
 };
 
-export const EV_GITHUB_COMMITS: IEvent = {
-    id: 'EV_GITHUB_COMMITS',
-    moreInfo: {
-        title: 'Number of Commits by Team',
-        description: 'Total number of commits made to a specific repository by the entire team.',
-        example:
-            'If the team made 50 commits to the repository in the last month, the metric value would be 50.',
-    },
-    fetcherIds: ['FT_REST_GITHUB_COMMITS'],
-    processConfigSchema: z.object({
-        tag: z.string(),
-    }),
-    process(_date, _window, fetchs, _processConfig): Record<string, unknown>[] {
-        const commitsFetch: IFetch = getFetchByFetcherId('FT_REST_GITHUB_COMMITS', fetchs);
-        return commitsFetch.data as Record<string, unknown>[];
-    },
-};
-
-// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES
+// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES, COUNT_INPROGRESSISSUES_MEMBER
 export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
     id: 'EV_GITHUB_ISSUES_BY_COLUMN',
     moreInfo: {
         title: 'Issues by Status',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository. Optionally filtered by assignee username.',
         example:
-            'If columns is ["In Progress"] and there are 5 issues in that column, the metric value would be 5.',
+            'If columns is ["In Progress"] and username is "alice", only issues in that column assigned to alice are counted.',
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
+        username: z.string().optional(),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
+        const { columns, username } = processConfig as { columns: string[]; username?: string };
         const issues = getProjectIssues(fetchs);
-        return issues.filter((issue) => isIssueAtAnyStatus(issue, columns));
+        return issues.filter(
+            (issue) =>
+                isIssueAtAnyStatus(issue, columns) &&
+                (!username ||
+                    issue.content.assignees.nodes.some((user) => user.login === username)),
+        );
     },
 };
 
@@ -144,34 +132,6 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
                 ),
         );
         return [...uniqueBranches].map((name) => ({ branch: name }));
-    },
-};
-
-// Uso de tpa: COUNT_INPROGRESSISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_ASSOCIATED_TO_MEMBER: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_ASSOCIATED_TO_MEMBER',
-    moreInfo: {
-        title: 'Issues by Status Assigned to Member',
-        description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 that are assigned to a specific member.',
-        example:
-            'If columns is ["In Progress"] and the member has 2 issues assigned in that column, the metric value would be 2.',
-    },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
-    processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        username: z.string(),
-    }),
-    process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
-        const issues = getProjectIssues(fetchs);
-        return issues.filter(
-            (issue) =>
-                isIssueAtAnyStatus(issue, columns) &&
-                issue.content.assignees.nodes.some((user) => user.login === processConfig.username),
-        ) as Record<string, unknown>[];
     },
 };
 

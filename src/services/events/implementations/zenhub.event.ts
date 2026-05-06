@@ -54,17 +54,13 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN: IEvent = {
             username?: string;
         };
         const zenhubData = getZenhubData(fetchs);
-        let issues = getZenhubIssuesByColumns(zenhubData, columns);
-        if (afterCreatedAt) {
-            const afterDate = new Date(afterCreatedAt);
-            issues = issues.filter((issue) => new Date(issue.createdAt) >= afterDate);
-        }
-        if (username) {
-            issues = issues.filter((issue) =>
-                issue.assignees.nodes.some((user) => user.login === username),
-            );
-        }
-        return issues;
+        const issues = getZenhubIssuesByColumns(zenhubData, columns);
+        const afterDate = afterCreatedAt ? new Date(afterCreatedAt) : null;
+        return issues.filter(
+            (issue) =>
+                (!afterDate || new Date(issue.createdAt) >= afterDate) &&
+                (!username || issue.assignees.nodes.some((user) => user.login === username)),
+        );
     },
 };
 
