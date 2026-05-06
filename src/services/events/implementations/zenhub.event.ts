@@ -27,9 +27,12 @@ const getZenhubIssuesByColumns = (zenhubData: ZenhubData, columns: string[]): Ze
 const getGithubIssuesMatchingZenhubIssues = (
     githubIssues: GithubIssue[],
     zenhubIssues: ZenhubIssue[],
+    extraFilter?: (issue: GithubIssue) => boolean,
 ): GithubIssue[] => {
     const zenhubIssueNumbers = new Set(zenhubIssues.map((issue) => issue.number));
-    return githubIssues.filter((issue) => zenhubIssueNumbers.has(issue.number));
+    return githubIssues.filter(
+        (issue) => zenhubIssueNumbers.has(issue.number) && (!extraFilter || extraFilter(issue)),
+    );
 };
 
 export const EV_ZENHUB_ISSUES_BY_COLUMN: IEvent = {
@@ -82,8 +85,11 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
         const zenhubData = getZenhubData(fetchs);
         const githubIssues = getGithubIssues(fetchs);
         const zenhubIssues = getZenhubIssuesByColumns(zenhubData, columns);
-        const matchedGithubIssues = getGithubIssuesMatchingZenhubIssues(githubIssues, zenhubIssues);
-        return matchedGithubIssues.filter((issue) => issue.linkedBranches.nodes.length > 0);
+        return getGithubIssuesMatchingZenhubIssues(
+            githubIssues,
+            zenhubIssues,
+            (issue) => issue.linkedBranches.nodes.length > 0, // TODO: puede traer algunas issues con ramas con ref null
+        );
     },
 };
 
@@ -147,7 +153,11 @@ export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
         const zenhubData = getZenhubData(fetchs);
         const githubIssues = getGithubIssues(fetchs);
         const zenhubIssues = getZenhubIssuesByColumns(zenhubData, columns);
-        const matchedGithubIssues = getGithubIssuesMatchingZenhubIssues(githubIssues, zenhubIssues);
+        const matchedGithubIssues = getGithubIssuesMatchingZenhubIssues(
+            githubIssues,
+            zenhubIssues,
+            (issue) => issue.linkedBranches.nodes.length > 0,
+        );
         const knownBranches = new Set<string>();
         const issuesWithDifferentBranches: GithubIssue[] = [];
 
@@ -155,7 +165,8 @@ export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
             let issueAdded = false;
 
             for (const branch of issue.linkedBranches.nodes) {
-                if (knownBranches.has(branch.ref.name)) continue;
+                const branchName = branch.ref?.name;
+                if (!branchName || knownBranches.has(branchName)) continue; // Algunas issues pueden venir con ref a null que github no puede resolver
 
                 knownBranches.add(branch.ref.name);
                 if (!issueAdded) {
