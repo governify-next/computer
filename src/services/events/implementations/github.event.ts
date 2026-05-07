@@ -1,53 +1,51 @@
 import { z } from 'zod';
 import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
-import {
-    getProjectIssues,
-    getPullRequests,
-    isIssueAtAnyStatus,
-} from '../utils/github.event.util.js';
-import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
 import { getFetchByFetcherId } from '../utils/fetcher.util.js';
+import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
+import { ProjectIssue, PullRequest } from '../../../types/github.event.js';
 
-export const EV_GITHUB_COMMITS: IEvent = {
-    id: 'EV_GITHUB_COMMITS',
-    moreInfo: {
-        title: 'Number of Commits by Team',
-        description: 'Total number of commits made to a specific repository by the entire team.',
-        example:
-            'If the team made 50 commits to the repository in the last month, the metric value would be 50.',
-    },
-    fetcherIds: ['FT_REST_GITHUB_COMMITS'],
-    processConfigSchema: z.object({
-        owner: z.string(),
-        repository: z.string(),
-    }),
-    process(_date, _window, fetchs, _processConfig): Record<string, unknown>[] {
-        const commitsFetch: IFetch = getFetchByFetcherId('FT_REST_GITHUB_COMMITS', fetchs);
-        return commitsFetch.data as Record<string, unknown>[];
-    },
+const getProjectIssues = (fetchs: IFetch[]): ProjectIssue[] => {
+    const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
+        .data as ProjectIssue[];
+    return items.filter((item) => item.content?.__typename === 'Issue');
 };
 
-// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES
+const getPullRequests = (fetchs: IFetch[]): PullRequest[] => {
+    return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as PullRequest[];
+};
+
+const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean => {
+    const status = issue.fieldValues.nodes.find((node) => node.field?.name === 'Status')?.name;
+    return status != null && statuses.includes(status);
+};
+
+// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES, COUNT_INPROGRESSISSUES_MEMBER
 export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
     id: 'EV_GITHUB_ISSUES_BY_COLUMN',
     moreInfo: {
         title: 'Issues by Status',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository. Optionally filtered by assignee username.',
         example:
-            'If columns is ["In Progress"] and there are 5 issues in that column, the metric value would be 5.',
+            'If columns is ["In Progress"] and username is "alice", only issues in that column assigned to alice are counted.',
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
+        username: z.string().optional(),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] }; // por usar unknown en event. Podría eliminarse con any pero salta lint
+        const { columns, username } = processConfig as { columns: string[]; username?: string };
         const issues = getProjectIssues(fetchs);
-        return issues.filter((issue) => isIssueAtAnyStatus(issue, columns));
+        return issues.filter(
+            (issue) =>
+                isIssueAtAnyStatus(issue, columns) &&
+                (!username ||
+                    issue.content.assignees.nodes.some((user) => user.login === username)),
+        );
     },
 };
 
@@ -101,7 +99,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
             (issue) =>
                 isIssueAtAnyStatus(issue, columns) &&
                 issue.content.closedByPullRequestsReferences.nodes.some(
-                    (pr) => pr.state === processConfig.status, // con comparaciones no salta el uso de unknown
+                    (pr) => pr.state === processConfig.status,
                 ),
         );
     },
@@ -113,9 +111,9 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     moreInfo: {
         title: 'Distinct Branches by Status',
         description:
-            'Number of distinct branch names linked to issues in the specified status columns of the GitHub ProjectV2. Branches shared across multiple issues are counted once.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that contribute at least one branch not already seen in previous matching issues.',
         example:
-            'If columns is ["In Progress"] and 3 issues link to [feat/a, feat/b], [feat/a] and [feat/c], the metric value would be 3 (feat/a, feat/b, feat/c).',
+            'If columns is ["In Progress"] with issues is1->[feat/a], is2->[feat/a] and is3->[feat/b], the metric value would be 2.',
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
@@ -126,42 +124,25 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns } = processConfig as { columns: string[] };
         const issues = getProjectIssues(fetchs);
-        const uniqueBranches = new Set(
-            issues
-                .filter((issue) => isIssueAtAnyStatus(issue, columns))
-                .flatMap((issue) =>
-                    issue.content.linkedBranches.nodes.map((branch) => branch.ref.name),
-                ),
-        );
-        return [...uniqueBranches].map((name) => ({ branch: name }));
-    },
-};
+        const knownBranches = new Set<string>();
+        const issuesWithDifferentBranches: ProjectIssue[] = [];
+        // TODO: se puede integrar con el evento de zenhub que comparte lógica interna
+        for (const issue of issues.filter((issue) => isIssueAtAnyStatus(issue, columns))) {
+            let issueAdded = false;
 
-// Uso de tpa: COUNT_INPROGRESSISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_ASSOCIATED_TO_MEMBER: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_ASSOCIATED_TO_MEMBER',
-    moreInfo: {
-        title: 'Issues by Status Assigned to Member',
-        description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 that are assigned to a specific member.',
-        example:
-            'If columns is ["In Progress"] and the member has 2 issues assigned in that column, the metric value would be 2.',
-    },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
-    processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        username: z.string(),
-    }),
-    process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
-        const issues = getProjectIssues(fetchs);
-        return issues.filter(
-            (issue) =>
-                isIssueAtAnyStatus(issue, columns) &&
-                issue.content.assignees.nodes.some((user) => user.login === processConfig.username),
-        ) as Record<string, unknown>[];
+            for (const branch of issue.content.linkedBranches.nodes) {
+                const branchName = branch.ref?.name;
+                if (!branchName || knownBranches.has(branchName)) continue;
+
+                knownBranches.add(branchName);
+                if (!issueAdded) {
+                    issuesWithDifferentBranches.push(issue);
+                    issueAdded = true;
+                }
+            }
+        }
+
+        return issuesWithDifferentBranches;
     },
 };
 
