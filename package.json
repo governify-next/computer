@@ -1,5 +1,5 @@
 {
-    "name": "base",
+    "name": "computer",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -25,24 +25,27 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/governify-next/base.git"
+        "url": "git+https://github.com/governify-next/computer.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/governify-next/base/issues"
+        "url": "https://github.com/governify-next/computer/issues"
     },
-    "homepage": "https://github.com/governify-next/base#readme",
+    "homepage": "https://github.com/governify-next/computer#readme",
     "dependencies": {
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
         "express-validator": "^7.3.1",
         "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.0.2",
+        "redis": "^5.11.0",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
-        "yamljs": "^0.3.0"
+        "yamljs": "^0.3.0",
+        "zod": "^4.3.6"
     },
     "devDependencies": {
         "@commitlint/cli": "^20.2.0",
@@ -51,6 +54,7 @@
         "@eslint/json": "^0.14.0",
         "@eslint/markdown": "^7.5.1",
         "@types/express": "^5.0.6",
+        "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^25.0.3",
         "@types/supertest": "^6.0.3",
         "@types/swagger-ui-express": "^4.1.8",
