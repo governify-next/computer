@@ -16,7 +16,7 @@ export const computeMetric = async (
     processConfig: Record<string, unknown>,
     aggregation: IAggregation,
 ): Promise<IComputedMetric> => {
-    // Step 1: Process the event to get the main events
+    // Step 1: Fetch and process the event. If any fetch result failed, events will be null.
     const processedEvent: IProcessedEvent = await eventService.processEvent(
         eventId,
         date,
@@ -24,19 +24,17 @@ export const computeMetric = async (
         fetcherConfigs,
         processConfig,
     );
-    const mainEvents: Record<string, unknown>[] = processedEvent.events;
+
+    const mainEvents: Record<string, unknown>[] | null = processedEvent.events;
     const fetchs: IFetch[] = processedEvent.fetchs;
 
-    // Step 2: Aggregate the main events using the specified aggregation method to compute the final metric value
-    const aggregationResult: IAggregationResult = aggregatorService.aggregateEvents(
-        mainEvents,
-        aggregation,
-    );
+    // Step 2: Aggregate the main events using the specified aggregation method to compute the final metric value. Null agregation means some fetch data is missing.
+    const aggregationResult = getAggregationResult(mainEvents, aggregation);
 
-    // Step 3: Return the computed metric value along with evidences and the metric configuration
+    // Step 3: Return the computed metric value along with evidences and the metric configuration. If fetch data is missing, value will be null and evidences an empty array.
     return {
-        value: aggregationResult.value,
-        evidences: aggregationResult.evidences,
+        value: aggregationResult?.value ?? null,
+        evidences: aggregationResult?.evidences ?? [],
         metricConfig: {
             event: {
                 eventId,
@@ -51,4 +49,13 @@ export const computeMetric = async (
             aggregation,
         },
     };
+};
+
+const getAggregationResult = (
+    mainEvents: Record<string, unknown>[] | null,
+    aggregation: IAggregation,
+): IAggregationResult | null => {
+    if (mainEvents === null) return null;
+
+    return aggregatorService.aggregateEvents(mainEvents, aggregation);
 };

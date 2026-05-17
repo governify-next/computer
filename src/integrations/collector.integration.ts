@@ -64,27 +64,33 @@ export const generateFetchResult = async (
     date: Date,
     fetcherConfig: Record<string, unknown>,
 ) => {
-    const response = await fetch(
-        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
-        {
-            method: 'POST',
-            headers: serviceHeaders,
-            body: JSON.stringify({
-                date,
-                fetcherConfig: fetcherConfig,
-            }),
-        },
-    );
-    const result = await response.json();
-
-    if (!result.success)
-        throw new ExternalServiceError(
-            `Failed to initiate fetch result generation for fetcher ${fetcherId}`,
+    try {
+        const response = await fetch(
+            `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
+            {
+                method: 'POST',
+                headers: serviceHeaders,
+                body: JSON.stringify({
+                    date,
+                    fetcherConfig: fetcherConfig,
+                }),
+            },
         );
+        const result = await response.json();
 
-    if (result.data.status === 'IN_PROGRESS')
-        return waitForFetchResultCompletion(fetcherId, result);
-    return result.data;
+        if (!result.success)
+            throw new Error(`Failed to initiate fetch result generation for fetcher ${fetcherId}`);
+
+        if (result.data.status === 'IN_PROGRESS')
+            return waitForFetchResultCompletion(fetcherId, result);
+
+        return result.data;
+    } catch (error) {
+        throw new ExternalServiceError(
+            `Collector failed to generate fetch result for fetcher ${fetcherId}`,
+            error instanceof Error ? { message: error.message } : error,
+        );
+    }
 };
 
 const fetchResultPollingConfig = {
@@ -116,7 +122,7 @@ const waitForFetchResultCompletion = async (
         if (pollResponse.data.status === 'COMPLETED' || pollResponse.data.status === 'FAILED')
             return pollResponse.data;
         if (attempt === fetchResultPollingConfig.maxAttempts) {
-            throw new FetchError(
+            throw new Error(
                 `Fetch result generation for fetcher ${fetcherId} did not complete within expected time`,
             );
         }
