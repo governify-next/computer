@@ -79,7 +79,7 @@ export const processEvent = async (
 
 // This function indicates whether any of the fetchResults returned are FAILED
 const hasFailedFetch = (fetchs: IFetch[]) => {
-    return fetchs.some((fetch) => fetch.data === null);
+    return fetchs.some((fetch) => fetch.status !== 'COMPLETED');
 };
 
 // This function injects the stringified version of the process function into each event for documentation purposes

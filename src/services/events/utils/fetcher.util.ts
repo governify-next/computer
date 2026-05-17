@@ -17,6 +17,7 @@ export const fetchDataForEvent = async (
                 fetcherId: fetcherConfig.fetcherId,
                 fetcherConfig: fetcherConfig.fetcherConfig,
                 fetchResultId: fetchResult._id,
+                status: fetchResult.status,
                 data: fetchResult.data,
             };
         }),
