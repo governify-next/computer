@@ -59,9 +59,12 @@ export const processEvent = async (
     // Step 1: Fetch raw data from collector using the provided fetcher configurations
     const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
 
-    // Step 2: Process the fetched data using the event's process function to compute the events
     const event = getEventById(eventId);
-    const events = event.process(date, window, fetchs, processConfig);
+
+    // Step 2: Process the fetched data (if available) using the event's process function to compute the events
+    const events = hasFailedFetch(fetchs)
+        ? null
+        : event.process(date, window, fetchs, processConfig);
 
     // Step 3: Return the computed events along with the fetch results for evidence
     return {
@@ -72,6 +75,11 @@ export const processEvent = async (
         fetchs,
         processConfig,
     };
+};
+
+// This function indicates whether any of the fetchResults returned are FAILED
+const hasFailedFetch = (fetchs: IFetch[]) => {
+    return fetchs.some((fetch) => fetch.status !== 'COMPLETED');
 };
 
 // This function injects the stringified version of the process function into each event for documentation purposes
