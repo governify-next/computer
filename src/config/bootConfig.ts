@@ -13,15 +13,19 @@ export const bootEnv = {
     PORT: process.env.PORT || '5903',
 
     // Internal service URLs
-    COLLECTOR_SERVICE_URL: process.env.COLLECTOR_SERVICE_URL || 'http://localhost:5904',
+    AUTHENTICATOR_SERVICE_URL: process.env.AUTHENTICATOR_SERVICE_URL || 'http://localhost:5900',
+    FETCHER_SERVICE_URL: process.env.FETCHER_SERVICE_URL || 'http://localhost:5904',
 
     // Database URIs
     MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/governify-next',
     REDIS_URI: process.env.REDIS_URI || 'redis://localhost:6379',
 
     // JWT configuration
-    SERVICE_AUTHENTICATION_ENABLED: process.env.SERVICE_AUTHENTICATION_ENABLED === 'true',
+    CLIENT_ID: process.env.CLIENT_ID || 'computer',
+    CLIENT_SECRET: process.env.CLIENT_SECRET || 'computer_client_secret',
     JWT_SECRET: process.env.JWT_SECRET || 'governify_next_secret_key',
+    JWT_ISSUER: process.env.JWT_ISSUER || 'authenticator',
+    JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'governify-next',
 
     // Redis settings
     REDIS_ENABLED: process.env.REDIS_ENABLED === 'true',

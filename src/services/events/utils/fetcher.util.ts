@@ -1,6 +1,6 @@
 import { IFetch } from '../../../types/fetch.js';
 import { IFetcherConfig } from '../../../types/fetcherConfig.js';
-import * as collectorIntegration from '../../../integrations/collector.integration.js';
+import * as fetcherIntegration from '../../../integrations/fetcher.integration.js';
 
 export const fetchDataForEvent = async (
     date: Date,
@@ -8,7 +8,7 @@ export const fetchDataForEvent = async (
 ): Promise<IFetch[]> => {
     const fetchs: IFetch[] = await Promise.all(
         fetcherConfigs.map(async (fetcherConfig) => {
-            const fetchResult = await collectorIntegration.generateFetchResult(
+            const fetchResult = await fetcherIntegration.generateFetchResult(
                 fetcherConfig.fetcherId,
                 date,
                 fetcherConfig.fetcherConfig,

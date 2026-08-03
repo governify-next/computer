@@ -8,15 +8,35 @@ import {
     validateProcessConfig,
     validateEventValidation,
 } from '../middlewares/event.validator.js';
-import { validateCollectorHealth } from '../middlewares/collector.validator.js';
+import { validateFetcherHealth } from '../middlewares/fetcher.validator.js';
+import { anyOf } from '../middlewares/anyof.validator.js';
+import { SystemRole } from '../types/systemRole.js';
+import {
+    hasSystemRole,
+    checkUserAuthentication,
+    checkServiceAuthentication,
+    isService,
+} from '../middlewares/authenticator.validator.js';
 
 export const eventRoutes = Router();
 
-eventRoutes.get('/events', eventController.getEvents);
-eventRoutes.get('/events/:eventId', validateEventId, eventController.getEventById);
+eventRoutes.get(
+    '/events',
+    checkUserAuthentication,
+    hasSystemRole(SystemRole.ADMIN),
+    eventController.getEvents,
+);
+eventRoutes.get(
+    '/events/:eventId',
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    validateEventId,
+    eventController.getEventById,
+);
 eventRoutes.post(
     '/events/:eventId/process',
-    validateCollectorHealth,
+    checkUserAuthentication,
+    hasSystemRole(SystemRole.SUPERADMIN),
+    validateFetcherHealth,
     validateEventId,
     validateProcessEventBody,
     validateProvidedFetcherConfigs,
@@ -26,7 +46,9 @@ eventRoutes.post(
 );
 eventRoutes.post(
     '/events/:eventId/validate',
-    validateCollectorHealth,
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    anyOf(hasSystemRole(SystemRole.SUPERADMIN), isService),
+    validateFetcherHealth,
     validateEventValidation,
     eventController.validateEvent,
 );

@@ -5,7 +5,7 @@ import { IFetch } from '../../types/fetch.js';
 import { IFetcherConfig } from '../../types/fetcherConfig.js';
 import { IProcessedEvent } from '../../types/processedEvent.js';
 import * as fetcherUtils from './utils/fetcher.util.js';
-import * as collectorIntegrations from '../../integrations/collector.integration.js';
+import * as fetcherIntegrations from '../../integrations/fetcher.integration.js';
 
 import {
     EV_GITHUB_ISSUES_BY_COLUMN,
@@ -56,7 +56,7 @@ export const processEvent = async (
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
 ): Promise<IProcessedEvent> => {
-    // Step 1: Fetch raw data from collector using the provided fetcher configurations
+    // Step 1: Fetch raw data from fetcher using the provided fetcher configurations
     const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
 
     const event = getEventById(eventId);
@@ -132,7 +132,7 @@ export const validateEvent = async (
         for (const fetcherId of event.fetcherIds) {
             const fetcherConfig = fetcherConfigs.find((fc) => fc.fetcherId === fetcherId)!;
             try {
-                const validationResponse = await collectorIntegrations.validateFetcher(
+                const validationResponse = await fetcherIntegrations.validateFetcher(
                     fetcherConfig.fetcherId,
                     fetcherConfig.fetcherConfig,
                 );

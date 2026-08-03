@@ -4,7 +4,7 @@ import { NotFoundError, ValidationError } from '../utils/customErrors.js';
 import { ZodError } from 'zod';
 import * as eventService from '../services/events/event.service.js';
 import * as aggregatorService from '../services/aggregators/aggregator.service.js';
-import * as collectorIntegration from '../integrations/collector.integration.js';
+import * as fetcherIntegration from '../integrations/fetcher.integration.js';
 
 // ─── Express-validator ─────────────────────────────
 const collectValidationErrors = (req: Request, res: Response, next: NextFunction) => {
@@ -133,11 +133,11 @@ export const validateProvidedFetcherConfigs = async (
 
 export const validateFetcherConfigs = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Validation logic for fetcherConfigs against collector API validation endpoint
+        // Validation logic for fetcherConfigs against fetcher API validation endpoint
         const { fetcherConfigs } = req.body.event;
         const issues: Record<string, unknown>[] = [];
         for (const fetcherConfig of fetcherConfigs) {
-            const data = await collectorIntegration.validateFetcher(
+            const data = await fetcherIntegration.validateFetcher(
                 fetcherConfig.fetcherId,
                 fetcherConfig.fetcherConfig,
             );

@@ -9,13 +9,23 @@ import {
     validateAggregatorType,
     validateAggregatorConfig,
 } from '../middlewares/metric.validator.js';
-import { validateCollectorHealth } from '../middlewares/collector.validator.js';
+import { validateFetcherHealth } from '../middlewares/fetcher.validator.js';
+import { anyOf } from '../middlewares/anyof.validator.js';
+import { SystemRole } from '../types/systemRole.js';
+import {
+    hasSystemRole,
+    checkUserAuthentication,
+    checkServiceAuthentication,
+    isService,
+} from '../middlewares/authenticator.validator.js';
 
 export const metricRoutes = Router();
 
 metricRoutes.post(
     '/metric/compute',
-    validateCollectorHealth,
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    anyOf(hasSystemRole(SystemRole.SUPERADMIN), isService),
+    validateFetcherHealth,
     validateComputeMetricValidation,
     validateEventId,
     validateProvidedFetcherConfigs,

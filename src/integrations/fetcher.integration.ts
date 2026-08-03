@@ -1,13 +1,13 @@
 import { bootEnv } from '../config/bootConfig.js';
-import { serviceHeaders } from '../utils/serviceAuth.js';
 import { FetchError, ExternalServiceError } from '../utils/customErrors.js';
+import { getServiceHeaders } from '../utils/serviceAuthentication.js';
 
-const COLLECTOR_SERVICE_URL = bootEnv.COLLECTOR_SERVICE_URL;
+const FETCHER_SERVICE_URL = bootEnv.FETCHER_SERVICE_URL;
 
-// Function to check health of collector service --------------------------------
+// Function to check health of fetcher service --------------------------------
 export const checkHealth = async (): Promise<boolean> => {
     try {
-        const response = await fetch(`${COLLECTOR_SERVICE_URL}/health`, {
+        const response = await fetch(`${FETCHER_SERVICE_URL}/health`, {
             method: 'GET',
         });
         return response.ok;
@@ -21,9 +21,9 @@ export const validateFetcher = async (
     fetcherId: string,
     fetcherConfig: Record<string, unknown>,
 ) => {
-    const response = await fetch(`${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/validate`, {
+    const response = await fetch(`${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/validate`, {
         method: 'POST',
-        headers: serviceHeaders,
+        headers: getServiceHeaders(),
         body: JSON.stringify({
             fetcherConfig: fetcherConfig,
         }),
@@ -41,10 +41,10 @@ const getFetchResultByFetcherIdAndFetchResultId = async (
     fetchResultId: string,
 ) => {
     const response = await fetch(
-        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
+        `${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
         {
             method: 'GET',
-            headers: serviceHeaders,
+            headers: getServiceHeaders(),
         },
     );
     const result = await response.json();
@@ -65,10 +65,10 @@ export const generateFetchResult = async (
 ) => {
     try {
         const response = await fetch(
-            `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
+            `${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
             {
                 method: 'POST',
-                headers: serviceHeaders,
+                headers: getServiceHeaders(),
                 body: JSON.stringify({
                     date,
                     fetcherConfig: fetcherConfig,
@@ -86,7 +86,7 @@ export const generateFetchResult = async (
         return result.data;
     } catch (error) {
         throw new ExternalServiceError(
-            `Collector failed to generate fetch result for fetcher ${fetcherId}`,
+            `Fetcher failed to generate fetch result for fetcher ${fetcherId}`,
             error instanceof Error ? { message: error.message } : error,
         );
     }
