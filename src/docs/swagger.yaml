@@ -50,12 +50,31 @@ paths:
             operationId: computeMetric
             description: |
                 Processes an event and applies the requested aggregator to compute a metric.
+
+                Metric status is resolved from the terminal fetch results using this precedence:
+
+                | Fetch results / aggregation outcome | Metric status | `value` | `evidences` |
+                | --- | --- | --- | --- |
+                | At least one `FAILED` fetch result | `FAILED` | `null` | Empty |
+                | No `FAILED` results and at least one `UNAVAILABLE` result | `UNAVAILABLE` | `null` | Empty |
+                | Every fetch result is `COMPLETED` and aggregation returns a value | `COMPUTED` | Aggregated value | Aggregation evidence |
+                | Every fetch result is `COMPLETED`, but processing or aggregation produces no value | `FAILED` | `null` | Empty |
+
+                `FAILED` therefore has precedence over `UNAVAILABLE` when both occur. Computer polls
+                `IN_PROGRESS` fetch results until they become terminal; a polling timeout or a transport
+                failure is returned as an HTTP `422` error instead of a computed metric.
+
+                Every input fetcher configuration is returned with the exact `fetchResult` used. Its
+                `status` and `unavailableReason` explain the contribution of that fetch to the metric status.
+
                 Accepts a service token or a user token with the `SUPERADMIN` system role.
             requestBody:
                 $ref: '#/components/requestBodies/ComputeMetricBody'
             responses:
                 '200':
-                    description: Metric computed successfully.
+                    description: |
+                        Metric resolution completed. `UNAVAILABLE` and domain-level `FAILED` metrics are
+                        valid HTTP `200` responses; clients must inspect `data.status`.
                     content:
                         application/json:
                             schema:
@@ -1081,18 +1100,29 @@ components:
 
         ComputedMetric:
             type: object
+            description: |
+                Metric outcome and execution trace. Fetch-specific outcomes are stored next to the
+                corresponding configuration in `metricConfig.event.fetcherConfigs[].fetchResult`.
             additionalProperties: false
             properties:
                 status:
                     type: string
                     enum: [COMPUTED, UNAVAILABLE, FAILED]
+                    description: |
+                        Final metric status:
+
+                        - `COMPUTED`: all fetches completed and aggregation produced a value.
+                        - `UNAVAILABLE`: no fetch failed, but at least one fetch was unavailable.
+                        - `FAILED`: at least one fetch failed, or the completed data could not produce a value.
                     example: COMPUTED
                 value:
                     type: number
                     nullable: true
+                    description: Aggregated value for `COMPUTED`; null for `UNAVAILABLE` and `FAILED`.
                     example: 42
                 evidences:
                     type: array
+                    description: Aggregation evidence for `COMPUTED`; empty when the metric has no value.
                     items:
                         type: object
                         additionalProperties: true
@@ -1109,6 +1139,9 @@ components:
                                     example: EV_GITHUB_ISSUES_BY_COLUMN
                                 fetcherConfigs:
                                     type: array
+                                    description: |
+                                        Resolved fetcher configurations in execution order. Each entry contains
+                                        the exact persisted fetch result used for this metric.
                                     items:
                                         allOf:
                                             - $ref: '#/components/schemas/FetcherConfig'
@@ -1132,9 +1165,16 @@ components:
                                                                       FAILED,
                                                                   ]
                                                               example: COMPLETED
+                                                              description: |
+                                                                  Terminal outcome of this fetch. `IN_PROGRESS`
+                                                                  is exposed for schema completeness but is normally
+                                                                  polled before Computer returns the metric.
                                                           unavailableReason:
                                                               type: string
                                                               nullable: true
+                                                              description: |
+                                                                  Domain reason supplied by Fetcher when status is
+                                                                  `UNAVAILABLE`; null for all other statuses.
                                                               example: null
                                                       required:
                                                           - id
