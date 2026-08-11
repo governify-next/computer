@@ -11,7 +11,7 @@ export const EV_BLUEJAY_LOGS_BY_NUMBER: IEvent = {
     },
     fetcherIds: ['FT_REST_BLUEJAY_LOGS'],
     processConfigSchema: z.object({}),
-    process(_date, _window, _fetchs, _processConfig) {
+    process() {
         const events: Record<string, unknown>[] = [];
 
         return events;
@@ -28,7 +28,7 @@ export const EV_BLUEJAY_LOGS_BY_LEVEL: IEvent = {
     },
     fetcherIds: ['FT_REST_BLUEJAY_LOGS'],
     processConfigSchema: z.object({}),
-    process(_date, _window, _fetchs, _processConfig) {
+    process() {
         const events: Record<string, unknown>[] = [];
 
         return events;

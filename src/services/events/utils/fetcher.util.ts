@@ -1,16 +1,17 @@
 import { IFetch } from '../../../types/fetch.js';
 import { IFetcherConfig } from '../../../types/fetcherConfig.js';
 import * as fetcherIntegration from '../../../integrations/fetcher.integration.js';
+import { ITemporalContext } from '../../../types/temporal.js';
 
 export const fetchDataForEvent = async (
-    date: Date,
+    temporalContext: ITemporalContext,
     fetcherConfigs: IFetcherConfig[],
 ): Promise<IFetch[]> => {
     const fetchs: IFetch[] = await Promise.all(
         fetcherConfigs.map(async (fetcherConfig) => {
             const fetchResult = await fetcherIntegration.generateFetchResult(
                 fetcherConfig.fetcherId,
-                date,
+                temporalContext,
                 fetcherConfig.fetcherConfig,
             );
             return {
@@ -18,6 +19,7 @@ export const fetchDataForEvent = async (
                 fetcherConfig: fetcherConfig.fetcherConfig,
                 fetchResultId: fetchResult._id,
                 status: fetchResult.status,
+                unavailableReason: fetchResult.unavailableReason ?? null,
                 data: fetchResult.data,
             };
         }),

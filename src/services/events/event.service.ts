@@ -6,6 +6,7 @@ import { IFetcherConfig } from '../../types/fetcherConfig.js';
 import { IProcessedEvent } from '../../types/processedEvent.js';
 import * as fetcherUtils from './utils/fetcher.util.js';
 import * as fetcherIntegrations from '../../integrations/fetcher.integration.js';
+import { ITemporalContext } from '../../types/temporal.js';
 
 import {
     EV_GITHUB_ISSUES_BY_COLUMN,
@@ -51,26 +52,26 @@ export const events: Record<string, IEvent> = {
 
 export const processEvent = async (
     eventId: string,
-    date: Date,
+    temporalContext: ITemporalContext,
     window: IWindow,
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
 ): Promise<IProcessedEvent> => {
     // Step 1: Fetch raw data from fetcher using the provided fetcher configurations
-    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
+    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(temporalContext, fetcherConfigs);
 
     const event = getEventById(eventId);
 
     // Step 2: Process the fetched data (if available) using the event's process function to compute the events
     const events = hasFailedFetch(fetchs)
         ? null
-        : event.process(date, window, fetchs, processConfig);
+        : event.process(temporalContext.effectiveAt, window, fetchs, processConfig);
 
     // Step 3: Return the computed events along with the fetch results for evidence
     return {
         events,
         eventId,
-        date,
+        date: temporalContext.effectiveAt,
         window,
         fetchs,
         processConfig,

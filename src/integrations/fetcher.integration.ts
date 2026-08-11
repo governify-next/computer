@@ -1,6 +1,7 @@
 import { bootEnv } from '../config/bootConfig.js';
 import { FetchError, ExternalServiceError } from '../utils/customErrors.js';
 import { getServiceHeaders } from '../utils/serviceAuthentication.js';
+import { ITemporalContext } from '../types/temporal.js';
 
 const FETCHER_SERVICE_URL = bootEnv.FETCHER_SERVICE_URL;
 
@@ -60,7 +61,7 @@ const getFetchResultByFetcherIdAndFetchResultId = async (
 // Function to generate fetch result and poll for completion -------------------
 export const generateFetchResult = async (
     fetcherId: string,
-    date: Date,
+    temporalContext: ITemporalContext,
     fetcherConfig: Record<string, unknown>,
 ) => {
     try {
@@ -70,7 +71,7 @@ export const generateFetchResult = async (
                 method: 'POST',
                 headers: getServiceHeaders(),
                 body: JSON.stringify({
-                    date,
+                    temporalContext,
                     fetcherConfig: fetcherConfig,
                 }),
             },
@@ -100,7 +101,8 @@ const fetchResultPollingConfig = {
 interface FetchResultResponse {
     data: {
         _id: string;
-        status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+        status: 'IN_PROGRESS' | 'COMPLETED' | 'UNAVAILABLE' | 'FAILED';
+        unavailableReason: string | null;
         data: unknown;
     };
 }
@@ -118,7 +120,11 @@ const waitForFetchResultCompletion = async (
             fetcherId,
             fetchResultId,
         );
-        if (pollResponse.data.status === 'COMPLETED' || pollResponse.data.status === 'FAILED')
+        if (
+            pollResponse.data.status === 'COMPLETED' ||
+            pollResponse.data.status === 'UNAVAILABLE' ||
+            pollResponse.data.status === 'FAILED'
+        )
             return pollResponse.data;
         if (attempt === fetchResultPollingConfig.maxAttempts) {
             throw new Error(

@@ -1,14 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendSuccess } from '../utils/standardResponse.js';
 import * as metricService from '../services/metric.service.js';
+import { TemporalMode } from '../types/temporal.js';
 
 export const computeMetric = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { event, aggregation } = req.body;
+        const { temporalContext, event, aggregation } = req.body;
 
         const result = await metricService.computeMetric(
             event.eventId,
-            event.date,
+            {
+                effectiveAt: new Date(temporalContext.effectiveAt),
+                mode: temporalContext.mode as TemporalMode,
+            },
             event.window,
             event.fetcherConfigs,
             event.processConfig,

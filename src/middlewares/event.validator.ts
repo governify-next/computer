@@ -25,11 +25,23 @@ export const validateEventId = async (req: Request, res: Response, next: NextFun
     }
 };
 
-const dateValidation = body('date')
-    .exists({ checkNull: true })
-    .withMessage('date is required')
-    .isISO8601()
-    .withMessage('date must be a valid ISO 8601 date string');
+const temporalContextValidation = [
+    body('temporalContext')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext is required')
+        .isObject()
+        .withMessage('temporalContext must be an object'),
+    body('temporalContext.effectiveAt')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext.effectiveAt is required')
+        .isISO8601()
+        .withMessage('temporalContext.effectiveAt must be a valid ISO 8601 date string'),
+    body('temporalContext.mode')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext.mode is required')
+        .isIn(['CAPTURE', 'REPLAY'])
+        .withMessage('temporalContext.mode must be CAPTURE or REPLAY'),
+];
 
 const windowValidation = [
     body('window')
@@ -184,7 +196,7 @@ const processConfigOptionalValidation = body('processConfig')
     .withMessage('processConfig must be an object');
 
 export const validateProcessEventBody = [
-    dateValidation,
+    ...temporalContextValidation,
     ...windowValidation,
     ...fetcherConfigsValidation,
     processConfigValidation,

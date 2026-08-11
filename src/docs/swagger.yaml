@@ -732,13 +732,17 @@ components:
                     example: 67c9ff7b2ddf1b3940f9f321
                 status:
                     type: string
-                    enum: [IN_PROGRESS, COMPLETED, FAILED]
+                    enum: [IN_PROGRESS, COMPLETED, UNAVAILABLE, FAILED]
                     example: COMPLETED
+                unavailableReason:
+                    type: string
+                    nullable: true
             required:
                 - fetcherId
                 - fetcherConfig
                 - fetchResultId
                 - status
+                - unavailableReason
 
         FetchDetail:
             allOf:
@@ -781,14 +785,28 @@ components:
                 - anchorDate
                 - period
 
+        TemporalContext:
+            type: object
+            additionalProperties: false
+            properties:
+                effectiveAt:
+                    type: string
+                    format: date-time
+                    example: '2026-04-22T10:00:00.000Z'
+                mode:
+                    type: string
+                    enum: [CAPTURE, REPLAY]
+                    example: REPLAY
+            required:
+                - effectiveAt
+                - mode
+
         ProcessEventRequest:
             type: object
             additionalProperties: false
             properties:
-                date:
-                    type: string
-                    format: date-time
-                    example: '2026-04-22T10:00:00.000Z'
+                temporalContext:
+                    $ref: '#/components/schemas/TemporalContext'
                 window:
                     $ref: '#/components/schemas/Window'
                 fetcherConfigs:
@@ -802,7 +820,7 @@ components:
                     example:
                         columns: [Done]
             required:
-                - date
+                - temporalContext
                 - window
                 - fetcherConfigs
                 - processConfig
@@ -1027,6 +1045,8 @@ components:
             type: object
             additionalProperties: false
             properties:
+                temporalContext:
+                    $ref: '#/components/schemas/TemporalContext'
                 event:
                     type: object
                     additionalProperties: false
@@ -1035,10 +1055,6 @@ components:
                             type: string
                             description: Event identifier supplied as free text.
                             example: EV_GITHUB_ISSUES_BY_COLUMN
-                        date:
-                            type: string
-                            format: date-time
-                            example: '2026-04-22T10:00:00.000Z'
                         window:
                             $ref: '#/components/schemas/Window'
                         fetcherConfigs:
@@ -1053,13 +1069,13 @@ components:
                                 columns: [Done]
                     required:
                         - eventId
-                        - date
                         - window
                         - fetcherConfigs
                         - processConfig
                 aggregation:
                     $ref: '#/components/schemas/AggregationConfig'
             required:
+                - temporalContext
                 - event
                 - aggregation
 
@@ -1067,6 +1083,10 @@ components:
             type: object
             additionalProperties: false
             properties:
+                status:
+                    type: string
+                    enum: [COMPUTED, UNAVAILABLE, FAILED]
+                    example: COMPUTED
                 value:
                     type: number
                     nullable: true
@@ -1094,12 +1114,34 @@ components:
                                             - $ref: '#/components/schemas/FetcherConfig'
                                             - type: object
                                               properties:
-                                                  fetchResultId:
-                                                      type: string
-                                                      pattern: '^[a-fA-F0-9]{24}$'
-                                                      example: 67c9ff7b2ddf1b3940f9f321
+                                                  fetchResult:
+                                                      type: object
+                                                      additionalProperties: false
+                                                      properties:
+                                                          id:
+                                                              type: string
+                                                              pattern: '^[a-fA-F0-9]{24}$'
+                                                              example: 67c9ff7b2ddf1b3940f9f321
+                                                          status:
+                                                              type: string
+                                                              enum:
+                                                                  [
+                                                                      IN_PROGRESS,
+                                                                      COMPLETED,
+                                                                      UNAVAILABLE,
+                                                                      FAILED,
+                                                                  ]
+                                                              example: COMPLETED
+                                                          unavailableReason:
+                                                              type: string
+                                                              nullable: true
+                                                              example: null
+                                                      required:
+                                                          - id
+                                                          - status
+                                                          - unavailableReason
                                               required:
-                                                  - fetchResultId
+                                                  - fetchResult
                                 processConfig:
                                     type: object
                                     additionalProperties: true
@@ -1113,6 +1155,7 @@ components:
                         - event
                         - aggregation
             required:
+                - status
                 - value
                 - evidences
                 - metricConfig
