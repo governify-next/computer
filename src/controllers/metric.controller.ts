@@ -6,7 +6,6 @@ import { TemporalMode } from '../types/temporal.js';
 export const computeMetric = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { temporalContext, event, aggregation } = req.body;
-
         const result = await metricService.computeMetric(
             event.eventId,
             {

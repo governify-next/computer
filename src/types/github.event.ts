@@ -1,4 +1,37 @@
+import { z } from 'zod';
+
+export type IssueEvent = {
+    __typename: 'ProjectV2ItemStatusChangedEvent';
+    createdAt: string;
+    previousStatus: string;
+    status: string;
+};
+
+export type AssigneeEvent = {
+    __typename: 'AssignedEvent' | 'UnassignedEvent';
+    createdAt: string;
+    assignee: { __typename: 'User'; login: string };
+};
+
+export type TypeEvent = {
+    __typename: 'IssueTypeAddedEvent' | 'IssueTypeRemovedEvent' | 'IssueTypeChangedEvent';
+    createdAt: string;
+    issueType: { name: string };
+};
+
+export type TimelineEvent = IssueEvent | AssigneeEvent | TypeEvent;
+
 export type ProjectIssue = {
+    content: {
+        __typename: string;
+        number: number;
+        url: string;
+        title: string;
+        timelineItems: { nodes: TimelineEvent[] };
+    };
+};
+
+export type BasicProjectIssue = {
     fieldValues: { nodes: { name?: string; field?: { name?: string } }[] };
     content: {
         __typename: string;
