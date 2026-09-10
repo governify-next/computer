@@ -1,4 +1,5 @@
-import { z } from 'zod';
+export const PULL_REQUEST_TYPES = ['OPEN', 'CLOSED', 'MERGED'] as const;
+export type PullRequestType = (typeof PULL_REQUEST_TYPES)[number];
 
 export type IssueEvent = {
     __typename: 'ProjectV2ItemStatusChangedEvent';
@@ -19,7 +20,18 @@ export type TypeEvent = {
     issueType: { name: string };
 };
 
-export type TimelineEvent = IssueEvent | AssigneeEvent | TypeEvent;
+export type PullRequestConnectionEvent = {
+    __typename: 'ConnectedEvent' | 'DisconnectedEvent';
+    createdAt: string;
+    subject: {
+        __typename: 'PullRequest';
+        number: number;
+        closedAt: string | null;
+        mergedAt: string | null;
+    };
+};
+
+export type TimelineEvent = IssueEvent | AssigneeEvent | TypeEvent | PullRequestConnectionEvent;
 
 export type ProjectIssue = {
     content: {
@@ -32,20 +44,22 @@ export type ProjectIssue = {
 };
 
 export type BasicProjectIssue = {
-    fieldValues: { nodes: { name?: string; field?: { name?: string } }[] };
+    fieldValueByName: { status: string | null } | null;
     content: {
         __typename: string;
         updatedAt: string;
         assignees: { nodes: { login: string }[] };
+        issueType: { name: string };
         linkedBranches: { nodes: { ref: { name: string } }[] };
         closedByPullRequestsReferences: { nodes: { state: 'OPEN' | 'CLOSED' | 'MERGED' }[] };
     };
 };
 
 export type PullRequest = {
-    state: 'OPEN' | 'CLOSED' | 'MERGED';
+    state: PullRequestType;
     createdAt: string;
     mergedAt: string | null;
+    closedAt: string | null;
     author: { login: string };
     mergedBy: { login: string } | null;
     comments: { nodes: { author: { login: string }; createdAt: string }[] };
