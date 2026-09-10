@@ -3,7 +3,24 @@ import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
 import { getFetchByFetcherId } from '../utils/fetcher.util.js';
 import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
-import { ProjectIssue, PullRequest } from '../../../types/github.event.js';
+import {
+    AssigneeEvent,
+    BasicProjectIssue,
+    IssueEvent,
+    ProjectIssue,
+    PULL_REQUEST_TYPES,
+    PullRequest,
+    PullRequestConnectionEvent,
+    PullRequestType,
+    TimelineEvent,
+    TypeEvent,
+} from '../../../types/github.event.js';
+
+const getBasicProjectIssues = (fetchs: IFetch[]): BasicProjectIssue[] => {
+    const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC', fetchs)
+        .data as BasicProjectIssue[];
+    return items.filter((item) => item.content?.__typename === 'Issue');
+};
 
 const getProjectIssues = (fetchs: IFetch[]): ProjectIssue[] => {
     const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
@@ -15,9 +32,119 @@ const getPullRequests = (fetchs: IFetch[]): PullRequest[] => {
     return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as PullRequest[];
 };
 
-const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean => {
-    const status = issue.fieldValues.nodes.find((node) => node.field?.name === 'Status')?.name;
+const getLastEventByDate = (events: TimelineEvent[], date: Date, from?: Date) => {
+    return events
+        .filter(
+            (event) =>
+                new Date(event.createdAt) <= date && (!from || new Date(event.createdAt) >= from),
+        )
+        .at(-1);
+};
+
+const isIssueAtAnyStatus = (issue: BasicProjectIssue, statuses: string[]): boolean => {
+    const status = issue.fieldValueByName?.status;
     return status != null && statuses.includes(status);
+};
+
+const isIssueAtAnyStatusTimeline = (
+    issue: ProjectIssue,
+    statuses: string[],
+    date: Date,
+    from?: Date,
+): boolean => {
+    const timelineItems = issue.content.timelineItems.nodes.filter(
+        (item): item is IssueEvent => item.__typename === 'ProjectV2ItemStatusChangedEvent',
+    );
+    const statusInThatMoment = getLastEventByDate(timelineItems, date, from) as
+        | IssueEvent
+        | undefined;
+    return statusInThatMoment != null && statuses.includes(statusInThatMoment.status);
+};
+
+const isIssueAtType = (issue: BasicProjectIssue, type: string) => {
+    return issue.content.issueType.name === type;
+};
+
+const isIssueAtTypeTimeline = (issue: ProjectIssue, type: string, date: Date) => {
+    const typeEvents = issue.content.timelineItems.nodes.filter(
+        (item): item is TypeEvent =>
+            item.__typename === 'IssueTypeAddedEvent' ||
+            item.__typename === 'IssueTypeRemovedEvent' ||
+            item.__typename === 'IssueTypeChangedEvent',
+    );
+
+    const typeInThatMoment = getLastEventByDate(typeEvents, date) as TypeEvent | undefined;
+    return (
+        typeInThatMoment != null &&
+        typeInThatMoment.__typename !== 'IssueTypeRemovedEvent' &&
+        type === typeInThatMoment.issueType.name
+    );
+};
+
+const isIssueAssignedToUsernamesTimeline = (
+    issue: ProjectIssue,
+    usernames: string[],
+    date: Date,
+) => {
+    const assignees = new Set<string>();
+    const assigneeEvents = issue.content.timelineItems.nodes.filter(
+        (item): item is AssigneeEvent =>
+            new Date(item.createdAt) <= date &&
+            (item.__typename === 'AssignedEvent' || item.__typename === 'UnassignedEvent') &&
+            item.assignee.__typename === 'User',
+    );
+    for (const event of assigneeEvents) {
+        if (event.__typename === 'AssignedEvent') {
+            assignees.add(event.assignee.login);
+        } else {
+            assignees.delete(event.assignee.login);
+        }
+    }
+
+    return usernames.every((username) => assignees.has(username));
+};
+
+const isPrInStatusTimeline = (
+    closedAt: string | null,
+    mergedAt: string | null,
+    status: PullRequestType,
+    date: Date,
+) => {
+    const closed = closedAt != null && new Date(closedAt) <= date;
+    const merged = mergedAt != null && new Date(mergedAt) <= date;
+    if (status === 'OPEN') return !closed && !merged;
+    if (status === 'MERGED') return merged;
+    return closed && !merged; // CLOSED status
+};
+
+const isIssueAssociatedToPullRequestByStatusTimeline = (
+    issue: ProjectIssue,
+    status: PullRequestType,
+    date: Date,
+) => {
+    // 1. Get associated pull requests in that moment
+    const lastEventByPr = new Map<number, PullRequestConnectionEvent>();
+    // Add PRs to map by number
+    for (const item of issue.content.timelineItems.nodes) {
+        if (
+            (item.__typename !== 'ConnectedEvent' && item.__typename !== 'DisconnectedEvent') ||
+            item.subject.__typename !== 'PullRequest' ||
+            new Date(item.createdAt) > date
+        ) {
+            continue;
+        } else {
+            lastEventByPr.set(item.subject.number, item);
+        }
+    }
+    for (const lastEvent of lastEventByPr.values()) {
+        if (lastEvent.__typename !== 'ConnectedEvent') continue;
+        // 2. Check if any of the associated Prs is in the specified status
+        const { closedAt, mergedAt } = lastEvent.subject;
+        if (isPrInStatusTimeline(closedAt, mergedAt, status, date)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 // Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES, COUNT_INPROGRESSISSUES_MEMBER
@@ -26,25 +153,31 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
     moreInfo: {
         title: 'Issues by Status',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 associated with the repository. Optionally filtered by assignee username.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 boards associated with the repository. Optionally filtered by assigned usernames and issue type.',
         example:
-            'If columns is ["In Progress"] and username is "alice", only issues in that column assigned to alice are counted.',
+            'If columns is ["In Progress"] and usernames contains ["alice"], only issues in that column assigned to alice are counted.',
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
-        username: z.string().optional(),
+        usernames: z.array(z.string()).optional(),
+        type: z.string().optional(),
     }),
-    process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns, username } = processConfig as { columns: string[]; username?: string };
+    process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
+        const { columns, usernames, type } = processConfig as {
+            columns: string[];
+            usernames?: string[];
+            type?: string;
+        };
         const issues = getProjectIssues(fetchs);
+
         return issues.filter(
             (issue) =>
-                isIssueAtAnyStatus(issue, columns) &&
-                (!username ||
-                    issue.content.assignees.nodes.some((user) => user.login === username)),
+                isIssueAtAnyStatusTimeline(issue, columns, date) &&
+                (!usernames || isIssueAssignedToUsernamesTimeline(issue, usernames, date)) &&
+                (!type || isIssueAtTypeTimeline(issue, type, date)),
         );
     },
 };
@@ -55,22 +188,25 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
     moreInfo: {
         title: 'Issues by Status with Associated Branches',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one branch linked to them.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one branch linked to them. Optionally filtered by issue type.',
         example:
             'If columns is ["In Progress"], 5 issues are in that column and 3 have an associated branch, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC'],
     processConfigSchema: z.object({
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
+        type: z.string().optional(),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
-        const issues = getProjectIssues(fetchs);
+        const { columns, type } = processConfig as { columns: string[]; type?: string };
+        const issues = getBasicProjectIssues(fetchs);
         return issues.filter(
             (issue) =>
-                isIssueAtAnyStatus(issue, columns) && issue.content.linkedBranches.nodes.length > 0,
+                isIssueAtAnyStatus(issue, columns) &&
+                (!type || isIssueAtType(issue, type)) &&
+                issue.content.linkedBranches.nodes.length > 0,
         );
     },
 };
@@ -81,7 +217,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
     moreInfo: {
         title: 'Issues by Status with Associated Pull Requests by PR State',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one associated pull request in the specified PR state.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one associated pull request in the specified PR state. Optionally filtered by issue type.',
         example:
             'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
     },
@@ -90,17 +226,21 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
-        status: z.enum(['OPEN', 'CLOSED', 'MERGED']),
+        status: z.enum(PULL_REQUEST_TYPES),
+        type: z.string().optional(),
     }),
-    process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
+    process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
+        const { columns, status, type } = processConfig as {
+            columns: string[];
+            status: PullRequestType;
+            type?: string;
+        };
         const issues = getProjectIssues(fetchs);
         return issues.filter(
             (issue) =>
-                isIssueAtAnyStatus(issue, columns) &&
-                issue.content.closedByPullRequestsReferences.nodes.some(
-                    (pr) => pr.state === processConfig.status,
-                ),
+                isIssueAtAnyStatusTimeline(issue, columns, date) &&
+                (!type || isIssueAtTypeTimeline(issue, type, date)) &&
+                isIssueAssociatedToPullRequestByStatusTimeline(issue, status, date),
         );
     },
 };
@@ -111,23 +251,26 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     moreInfo: {
         title: 'Distinct Branches by Status',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 that contribute at least one branch not already seen in previous matching issues.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that contribute at least one branch not already seen in previous matching issues. Optionally filtered by issue type.',
         example:
             'If columns is ["In Progress"] with issues is1->[feat/a], is2->[feat/a] and is3->[feat/b], the metric value would be 2.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC'],
     processConfigSchema: z.object({
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
+        type: z.string().optional(),
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
-        const issues = getProjectIssues(fetchs);
+        const { columns, type } = processConfig as { columns: string[]; type?: string };
+        const issues = getBasicProjectIssues(fetchs);
         const knownBranches = new Set<string>();
-        const issuesWithDifferentBranches: ProjectIssue[] = [];
+        const issuesWithDifferentBranches: BasicProjectIssue[] = [];
         // TODO: se puede integrar con el evento de zenhub que comparte lógica interna
-        for (const issue of issues.filter((issue) => isIssueAtAnyStatus(issue, columns))) {
+        for (const issue of issues.filter(
+            (issue) => isIssueAtAnyStatus(issue, columns) && (!type || isIssueAtType(issue, type)),
+        )) {
             let issueAdded = false;
 
             for (const branch of issue.content.linkedBranches.nodes) {
@@ -147,12 +290,12 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
 };
 
 // Uso de tpa: COUNT_DONEISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER',
+export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER: IEvent = {
+    id: 'EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER',
     moreInfo: {
-        title: 'Issues by Status Assigned to Member Filtered by Update Date',
+        title: 'Issues by Status Assigned to Member Filtered by Period',
         description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 assigned to a specific member whose updatedAt timestamp falls within the current period window.',
+            'Number of issues in the specified status columns of the GitHub ProjectV2 assigned to specific members whose status events timestamp falls within the current period window. Optionally filtered by issue type.',
         example:
             'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
     },
@@ -161,28 +304,27 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_T
         columns: z.array(
             z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
         ),
-        username: z.string(),
+        usernames: z.array(z.string()),
+        type: z.string().optional(),
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns } = processConfig as { columns: string[] };
+        const { columns, usernames, type } = processConfig as {
+            columns: string[];
+            usernames: string[];
+            type?: string;
+        };
         const issues = getProjectIssues(fetchs);
         const from = getPeriodStartDateFromAnchorDateAndPeriod(
             date,
             window.anchorDate,
             window.period,
         );
-        const to = new Date(date);
-        return issues.filter((issue) => {
-            const updatedAt = new Date(issue.content.updatedAt);
-            return (
-                isIssueAtAnyStatus(issue, columns) &&
-                issue.content.assignees.nodes.some(
-                    (user) => user.login === processConfig.username,
-                ) &&
-                updatedAt >= from &&
-                updatedAt <= to
-            );
-        }) as Record<string, unknown>[];
+        return issues.filter(
+            (issue) =>
+                isIssueAtAnyStatusTimeline(issue, columns, date, from) &&
+                (!type || isIssueAtTypeTimeline(issue, type, date)) &&
+                isIssueAssignedToUsernamesTimeline(issue, usernames, date),
+        );
     },
 };
 
@@ -251,7 +393,11 @@ export const EV_GITHUB_MERGED_PR_BY_REVIEW_STATE: IEvent = {
                 mergedAt >= from &&
                 mergedAt <= to &&
                 (!processConfig.username || pr.mergedBy?.login === processConfig.username) &&
-                pr.reviews.nodes.some((r) => r.state === processConfig.reviewState)
+                pr.reviews.nodes.some(
+                    (review) =>
+                        review.state === processConfig.reviewState &&
+                        new Date(review.createdAt) <= to,
+                )
             );
         });
     },
@@ -281,13 +427,25 @@ export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
         const to = new Date(date);
         return pullRequests.filter((pr) => {
             if (pr.author.login === processConfig.username) return false;
-            if (pr.state === 'OPEN') return true;
-            if (pr.state === 'MERGED' && pr.mergedAt) {
+            if (
+                new Date(pr.createdAt) <= to &&
+                isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'OPEN', to)
+            )
+                return true;
+            if (isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'MERGED', to) && pr.mergedAt) {
                 const createdAt = new Date(pr.createdAt);
                 const mergedAt = new Date(pr.mergedAt);
                 return (
                     Math.max(from.getTime(), createdAt.getTime()) <=
                     Math.min(to.getTime(), mergedAt.getTime())
+                );
+            }
+            if (isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'CLOSED', to) && pr.closedAt) {
+                const createdAt = new Date(pr.createdAt);
+                const closedAt = new Date(pr.closedAt);
+                return (
+                    Math.max(from.getTime(), createdAt.getTime()) <=
+                    Math.min(to.getTime(), closedAt.getTime())
                 );
             }
             return false;
@@ -322,11 +480,19 @@ export const EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER: IEvent = {
             if (pr.author.login === processConfig.username) return false;
 
             const isReviewable =
-                pr.state === 'OPEN' ||
-                (pr.state === 'MERGED' &&
+                // PR currently OPEN in the period
+                (new Date(pr.createdAt) <= to &&
+                    isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'OPEN', to)) ||
+                // PR finalized MERGED in the period but had OPEN interval on it
+                (isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'MERGED', to) &&
                     pr.mergedAt &&
                     Math.max(from.getTime(), new Date(pr.createdAt).getTime()) <=
-                        Math.min(to.getTime(), new Date(pr.mergedAt).getTime()));
+                        Math.min(to.getTime(), new Date(pr.mergedAt).getTime())) ||
+                // PR finalized CLOSED in the period but had OPEN interval on it
+                (isPrInStatusTimeline(pr.closedAt, pr.mergedAt, 'CLOSED', to) &&
+                    pr.closedAt &&
+                    Math.max(from.getTime(), new Date(pr.createdAt).getTime()) <=
+                        Math.min(to.getTime(), new Date(pr.closedAt).getTime()));
             if (!isReviewable) return false;
 
             const hasComment = pr.comments.nodes.some((c) => {
