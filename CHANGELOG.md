@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.1.0](https://github.com/governify-next/computer/compare/v1.0.0...v1.1.0) (2026-09-14)
+
+
+### Features
+
+* adapt GitHub events for compatibility with historical fetchers and UCLM tpa ([c1546c0](https://github.com/governify-next/computer/commit/c1546c08256c4a31f45ada459fca9c1e6ccc9141))
+* enhance GitHub event processing with timeline support ([8c08f0f](https://github.com/governify-next/computer/commit/8c08f0f73188da9f36175ee59b2fd5d0716343ef))
+* enhance metric computation documentation with detailed status resolution ([546f0a8](https://github.com/governify-next/computer/commit/546f0a8333e9cf83f447d51d003586ad875451b3))
+* implement fetcher integration and authentication middleware ([df39b9c](https://github.com/governify-next/computer/commit/df39b9c5c0c20794dd156729b46c21bec7dbef62))
+* introduce temporal context handling in event and metric processing ([407ba19](https://github.com/governify-next/computer/commit/407ba19b9049b4d1cc196a10ce9a1551737015ff))
+
+
+### Bug Fixes
+
+* manejo de errores ([030f2ad](https://github.com/governify-next/computer/commit/030f2ad3d329e7b29299974dc8c38362090c949e))
+* mejorar manejo de errores y actualizar validaciones en la integración del colector ([1a05da7](https://github.com/governify-next/computer/commit/1a05da7431b7fe69d54bbcb584e3102527bbe6f8))
+
+
+### Miscellaneous Chores
+
+* prepare v1.1.0 release ([869ca35](https://github.com/governify-next/computer/commit/869ca357c664d4adcb99e68529c2180d6fdf8125))
+* release 1.1.0 ([50f0ce7](https://github.com/governify-next/computer/commit/50f0ce722afa02ca74450dbcb7085de004b36e4b))
+
 ## 1.0.0 (2026-05-14)
 
 ### Features
