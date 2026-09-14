@@ -2,7 +2,7 @@ import { IFetch } from './fetch.js';
 import { IWindow } from './window.js';
 
 export interface IProcessedEvent {
-    events: Record<string, unknown>[];
+    events: Record<string, unknown>[] | null;
     eventId: string;
     date: Date;
     window: IWindow;

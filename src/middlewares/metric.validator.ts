@@ -4,7 +4,7 @@ import { NotFoundError, ValidationError } from '../utils/customErrors.js';
 import { ZodError } from 'zod';
 import * as eventService from '../services/events/event.service.js';
 import * as aggregatorService from '../services/aggregators/aggregator.service.js';
-import * as collectorIntegration from '../integrations/collector.integration.js';
+import * as fetcherIntegration from '../integrations/fetcher.integration.js';
 
 // ─── Express-validator ─────────────────────────────
 const collectValidationErrors = (req: Request, res: Response, next: NextFunction) => {
@@ -14,6 +14,21 @@ const collectValidationErrors = (req: Request, res: Response, next: NextFunction
 };
 
 const eventValidation = [
+    body('temporalContext')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext is required')
+        .isObject()
+        .withMessage('temporalContext must be an object'),
+    body('temporalContext.effectiveAt')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext.effectiveAt is required')
+        .isISO8601()
+        .withMessage('temporalContext.effectiveAt must be a valid ISO 8601 date string'),
+    body('temporalContext.mode')
+        .exists({ checkNull: true })
+        .withMessage('temporalContext.mode is required')
+        .isIn(['CAPTURE', 'REPLAY'])
+        .withMessage('temporalContext.mode must be CAPTURE or REPLAY'),
     body('event')
         .exists({ checkNull: true })
         .withMessage('event is required')
@@ -24,11 +39,6 @@ const eventValidation = [
         .withMessage('event.eventId is required')
         .isString()
         .withMessage('event.eventId must be a string'),
-    body('event.date')
-        .exists({ checkNull: true })
-        .withMessage('date is required')
-        .isISO8601()
-        .withMessage('date must be a valid ISO 8601 date string'),
     body('event.window')
         .exists({ checkNull: true })
         .withMessage('window is required')
@@ -133,11 +143,11 @@ export const validateProvidedFetcherConfigs = async (
 
 export const validateFetcherConfigs = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Validation logic for fetcherConfigs against collector API validation endpoint
+        // Validation logic for fetcherConfigs against fetcher API validation endpoint
         const { fetcherConfigs } = req.body.event;
         const issues: Record<string, unknown>[] = [];
         for (const fetcherConfig of fetcherConfigs) {
-            const data = await collectorIntegration.validateFetcher(
+            const data = await fetcherIntegration.validateFetcher(
                 fetcherConfig.fetcherId,
                 fetcherConfig.fetcherConfig,
             );

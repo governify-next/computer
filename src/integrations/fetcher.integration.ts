@@ -1,17 +1,17 @@
 import { bootEnv } from '../config/bootConfig.js';
-import { serviceHeaders } from '../utils/serviceAuth.js';
 import { FetchError, ExternalServiceError } from '../utils/customErrors.js';
+import { getServiceHeaders } from '../utils/serviceAuthentication.js';
+import { ITemporalContext } from '../types/temporal.js';
 
-const COLLECTOR_SERVICE_URL = bootEnv.COLLECTOR_SERVICE_URL;
+const FETCHER_SERVICE_URL = bootEnv.FETCHER_SERVICE_URL;
 
-// Function to check health of collector service --------------------------------
+// Function to check health of fetcher service --------------------------------
 export const checkHealth = async (): Promise<boolean> => {
     try {
-        const response = await fetch(`${COLLECTOR_SERVICE_URL}/health`, {
+        const response = await fetch(`${FETCHER_SERVICE_URL}/health`, {
             method: 'GET',
         });
-        const result = await response.json();
-        return result;
+        return response.ok;
     } catch {
         return false;
     }
@@ -22,9 +22,9 @@ export const validateFetcher = async (
     fetcherId: string,
     fetcherConfig: Record<string, unknown>,
 ) => {
-    const response = await fetch(`${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/validate`, {
+    const response = await fetch(`${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/validate`, {
         method: 'POST',
-        headers: serviceHeaders,
+        headers: getServiceHeaders(),
         body: JSON.stringify({
             fetcherConfig: fetcherConfig,
         }),
@@ -42,10 +42,10 @@ const getFetchResultByFetcherIdAndFetchResultId = async (
     fetchResultId: string,
 ) => {
     const response = await fetch(
-        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
+        `${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/${fetchResultId}`,
         {
             method: 'GET',
-            headers: serviceHeaders,
+            headers: getServiceHeaders(),
         },
     );
     const result = await response.json();
@@ -61,30 +61,36 @@ const getFetchResultByFetcherIdAndFetchResultId = async (
 // Function to generate fetch result and poll for completion -------------------
 export const generateFetchResult = async (
     fetcherId: string,
-    date: Date,
+    temporalContext: ITemporalContext,
     fetcherConfig: Record<string, unknown>,
 ) => {
-    const response = await fetch(
-        `${COLLECTOR_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
-        {
-            method: 'POST',
-            headers: serviceHeaders,
-            body: JSON.stringify({
-                date,
-                fetcherConfig: fetcherConfig,
-            }),
-        },
-    );
-    const result = await response.json();
-
-    if (!result.success)
-        throw new ExternalServiceError(
-            `Failed to initiate fetch result generation for fetcher ${fetcherId}`,
+    try {
+        const response = await fetch(
+            `${FETCHER_SERVICE_URL}/api/v1/fetchers/${fetcherId}/fetchResults/generate?isAsync=true`,
+            {
+                method: 'POST',
+                headers: getServiceHeaders(),
+                body: JSON.stringify({
+                    temporalContext,
+                    fetcherConfig: fetcherConfig,
+                }),
+            },
         );
+        const result = await response.json();
 
-    if (result.data.status === 'IN_PROGRESS')
-        return waitForFetchResultCompletion(fetcherId, result);
-    return result.data;
+        if (!result.success)
+            throw new Error(`Failed to initiate fetch result generation for fetcher ${fetcherId}`);
+
+        if (result.data.status === 'IN_PROGRESS')
+            return waitForFetchResultCompletion(fetcherId, result);
+
+        return result.data;
+    } catch (error) {
+        throw new ExternalServiceError(
+            `Fetcher failed to generate fetch result for fetcher ${fetcherId}`,
+            error instanceof Error ? { message: error.message } : error,
+        );
+    }
 };
 
 const fetchResultPollingConfig = {
@@ -95,7 +101,8 @@ const fetchResultPollingConfig = {
 interface FetchResultResponse {
     data: {
         _id: string;
-        status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+        status: 'IN_PROGRESS' | 'COMPLETED' | 'UNAVAILABLE' | 'FAILED';
+        unavailableReason: string | null;
         data: unknown;
     };
 }
@@ -113,10 +120,14 @@ const waitForFetchResultCompletion = async (
             fetcherId,
             fetchResultId,
         );
-        if (pollResponse.data.status === 'COMPLETED' || pollResponse.data.status === 'FAILED')
+        if (
+            pollResponse.data.status === 'COMPLETED' ||
+            pollResponse.data.status === 'UNAVAILABLE' ||
+            pollResponse.data.status === 'FAILED'
+        )
             return pollResponse.data;
         if (attempt === fetchResultPollingConfig.maxAttempts) {
-            throw new FetchError(
+            throw new Error(
                 `Fetch result generation for fetcher ${fetcherId} did not complete within expected time`,
             );
         }

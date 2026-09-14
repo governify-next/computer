@@ -5,14 +5,15 @@ import { IFetch } from '../../types/fetch.js';
 import { IFetcherConfig } from '../../types/fetcherConfig.js';
 import { IProcessedEvent } from '../../types/processedEvent.js';
 import * as fetcherUtils from './utils/fetcher.util.js';
-import * as collectorIntegrations from '../../integrations/collector.integration.js';
+import * as fetcherIntegrations from '../../integrations/fetcher.integration.js';
+import { ITemporalContext } from '../../types/temporal.js';
 
 import {
     EV_GITHUB_ISSUES_BY_COLUMN,
     EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES,
     EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS,
     EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN,
-    EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER,
+    EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER,
     EV_GITHUB_PR_MERGED,
     EV_GITHUB_MERGED_PR_BY_REVIEW_STATE,
     EV_GITHUB_PRS_FROM_OTHERS,
@@ -35,7 +36,7 @@ export const events: Record<string, IEvent> = {
     EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES,
     EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS,
     EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN,
-    EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER,
+    EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER,
     EV_GITHUB_PR_MERGED,
     EV_GITHUB_MERGED_PR_BY_REVIEW_STATE,
     EV_GITHUB_PRS_FROM_OTHERS,
@@ -51,27 +52,35 @@ export const events: Record<string, IEvent> = {
 
 export const processEvent = async (
     eventId: string,
-    date: Date,
+    temporalContext: ITemporalContext,
     window: IWindow,
     fetcherConfigs: IFetcherConfig[],
     processConfig: Record<string, unknown>,
 ): Promise<IProcessedEvent> => {
-    // Step 1: Fetch raw data from collector using the provided fetcher configurations
-    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(date, fetcherConfigs);
+    // Step 1: Fetch raw data from fetcher using the provided fetcher configurations
+    const fetchs: IFetch[] = await fetcherUtils.fetchDataForEvent(temporalContext, fetcherConfigs);
 
-    // Step 2: Process the fetched data using the event's process function to compute the events
     const event = getEventById(eventId);
-    const events = event.process(date, window, fetchs, processConfig);
+
+    // Step 2: Process the fetched data (if available) using the event's process function to compute the events
+    const events = hasFailedFetch(fetchs)
+        ? null
+        : event.process(temporalContext.effectiveAt, window, fetchs, processConfig);
 
     // Step 3: Return the computed events along with the fetch results for evidence
     return {
         events,
         eventId,
-        date,
+        date: temporalContext.effectiveAt,
         window,
         fetchs,
         processConfig,
     };
+};
+
+// This function indicates whether any of the fetchResults returned are FAILED
+const hasFailedFetch = (fetchs: IFetch[]) => {
+    return fetchs.some((fetch) => fetch.status !== 'COMPLETED');
 };
 
 // This function injects the stringified version of the process function into each event for documentation purposes
@@ -124,7 +133,7 @@ export const validateEvent = async (
         for (const fetcherId of event.fetcherIds) {
             const fetcherConfig = fetcherConfigs.find((fc) => fc.fetcherId === fetcherId)!;
             try {
-                const validationResponse = await collectorIntegrations.validateFetcher(
+                const validationResponse = await fetcherIntegrations.validateFetcher(
                     fetcherConfig.fetcherId,
                     fetcherConfig.fetcherConfig,
                 );

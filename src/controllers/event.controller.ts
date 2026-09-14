@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendSuccess } from '../utils/standardResponse.js';
 import * as eventService from '../services/events/event.service.js';
+import { TemporalMode } from '../types/temporal.js';
 
 export const getEvents = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -24,11 +25,14 @@ export const getEventById = async (req: Request, res: Response, next: NextFuncti
 export const processEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { eventId } = req.params;
-        const { date, window, fetcherConfigs, processConfig } = req.body;
+        const { temporalContext, window, fetcherConfigs, processConfig } = req.body;
 
         const result = await eventService.processEvent(
             eventId,
-            date,
+            {
+                effectiveAt: new Date(temporalContext.effectiveAt),
+                mode: temporalContext.mode as TemporalMode,
+            },
             window,
             fetcherConfigs,
             processConfig,
@@ -38,10 +42,9 @@ export const processEvent = async (req: Request, res: Response, next: NextFuncti
         if (expand) {
             return sendSuccess(res, { data: result, message: 'Event processed' });
         } else {
-            const fetchs = result.fetchs.map((fetch) => {
-                const { data, ...rest } = fetch;
-                return rest;
-            });
+            const fetchs = result.fetchs.map((fetch) =>
+                Object.fromEntries(Object.entries(fetch).filter(([key]) => key !== 'data')),
+            );
             return sendSuccess(res, {
                 data: {
                     ...result,
