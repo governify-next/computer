@@ -49,7 +49,7 @@ export type BasicProjectIssue = {
         __typename: string;
         updatedAt: string;
         assignees: { nodes: { login: string }[] };
-        issueType: { name: string };
+        issueType: { name: string | null };
         linkedBranches: { nodes: { ref: { name: string } }[] };
         closedByPullRequestsReferences: { nodes: { state: 'OPEN' | 'CLOSED' | 'MERGED' }[] };
     };

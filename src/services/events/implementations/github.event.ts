@@ -62,7 +62,7 @@ const isIssueAtAnyStatusTimeline = (
 };
 
 const isIssueAtType = (issue: BasicProjectIssue, type: string) => {
-    return issue.content.issueType.name === type;
+    return issue.content.issueType?.name === type;
 };
 
 const isIssueAtTypeTimeline = (issue: ProjectIssue, type: string, date: Date) => {
