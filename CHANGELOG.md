@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1](https://github.com/governify-next/computer/compare/v1.1.0...v1.1.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* handle null values in issueType for GitHub events ([e16f5dd](https://github.com/governify-next/computer/commit/e16f5dd517c9bf84edb0046fdeb31cdb416ff2be))
+* handle null values in issueType for GitHub events when boards dont use types in items ([e96c0f2](https://github.com/governify-next/computer/commit/e96c0f2d0839bb8231da1a4daebc934d8eb60f49))
+* new version ([dd7e878](https://github.com/governify-next/computer/commit/dd7e87885a6e145a24880b2eb57cf268337de77e))
+
 ## [1.1.0](https://github.com/governify-next/computer/compare/v1.0.0...v1.1.0) (2026-09-14)
 
 ### Features
