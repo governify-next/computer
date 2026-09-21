@@ -1,5 +1,4 @@
-export const PULL_REQUEST_TYPES = ['OPEN', 'CLOSED', 'MERGED'] as const;
-export type PullRequestType = (typeof PULL_REQUEST_TYPES)[number];
+import { PullRequestType } from './schema.js';
 
 export type IssueEvent = {
     __typename: 'ProjectV2ItemStatusChangedEvent';

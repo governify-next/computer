@@ -8,13 +8,19 @@ import {
     BasicProjectIssue,
     IssueEvent,
     ProjectIssue,
-    PULL_REQUEST_TYPES,
     PullRequest,
     PullRequestConnectionEvent,
-    PullRequestType,
     TimelineEvent,
     TypeEvent,
 } from '../../../types/github.event.js';
+import {
+    columnsSchema,
+    pullRequestStatusSchema,
+    PullRequestType,
+    typeSchema,
+    usernameSchema,
+    usernamesSchema,
+} from '../../../types/schema.js';
 
 const getBasicProjectIssues = (fetchs: IFetch[]): BasicProjectIssue[] => {
     const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC', fetchs)
@@ -159,11 +165,9 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        usernames: z.array(z.string()).optional(),
-        type: z.string().optional(),
+        columns: columnsSchema,
+        usernames: usernamesSchema.optional(),
+        type: typeSchema,
     }),
     process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns, usernames, type } = processConfig as {
@@ -194,10 +198,8 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC'],
     processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        type: z.string().optional(),
+        columns: columnsSchema,
+        type: typeSchema,
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns, type } = processConfig as { columns: string[]; type?: string };
@@ -223,11 +225,9 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        status: z.enum(PULL_REQUEST_TYPES),
-        type: z.string().optional(),
+        columns: columnsSchema,
+        status: pullRequestStatusSchema,
+        type: typeSchema,
     }),
     process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns, status, type } = processConfig as {
@@ -257,10 +257,8 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_BASIC'],
     processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        type: z.string().optional(),
+        columns: columnsSchema,
+        type: typeSchema,
     }),
     process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns, type } = processConfig as { columns: string[]; type?: string };
@@ -301,11 +299,9 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER:
     },
     fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
-        columns: z.array(
-            z.enum(['In Progress', 'In progress', 'In Review', 'In review', 'Done', 'Closed']),
-        ),
-        usernames: z.array(z.string()),
-        type: z.string().optional(),
+        columns: columnsSchema,
+        usernames: usernamesSchema,
+        type: typeSchema,
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
         const { columns, usernames, type } = processConfig as {
@@ -340,7 +336,7 @@ export const EV_GITHUB_PR_MERGED: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
-        username: z.string().optional(),
+        username: usernameSchema.optional(),
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
         const pullRequests = getPullRequests(fetchs);
@@ -375,7 +371,7 @@ export const EV_GITHUB_MERGED_PR_BY_REVIEW_STATE: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
-        username: z.string().optional(),
+        username: usernameSchema.optional(),
         reviewState: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED', 'DISMISSED', 'PENDING']),
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
@@ -415,7 +411,7 @@ export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
-        username: z.string(),
+        username: usernameSchema,
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
         const pullRequests = getPullRequests(fetchs);
@@ -466,7 +462,7 @@ export const EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER: IEvent = {
     },
     fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
-        username: z.string(),
+        username: usernameSchema,
     }),
     process(date, window, fetchs, processConfig): Record<string, unknown>[] {
         const pullRequests = getPullRequests(fetchs);
