@@ -1,48 +1,48 @@
 import { PullRequestType } from './schema.js';
 
-export type IssueEvent = {
-    __typename: 'ProjectV2ItemStatusChangedEvent';
-    createdAt: string;
-    previousStatus: string;
-    status: string;
-};
+// export type IssueEvent = {
+//     __typename: 'ProjectV2ItemStatusChangedEvent';
+//     createdAt: string;
+//     previousStatus: string;
+//     status: string;
+// };
 
-export type AssigneeEvent = {
-    __typename: 'AssignedEvent' | 'UnassignedEvent';
-    createdAt: string;
-    assignee: { __typename: 'User'; login: string };
-};
+// export type AssigneeEvent = {
+//     __typename: 'AssignedEvent' | 'UnassignedEvent';
+//     createdAt: string;
+//     assignee: { __typename: 'User'; login: string };
+// };
 
-export type TypeEvent = {
-    __typename: 'IssueTypeAddedEvent' | 'IssueTypeRemovedEvent' | 'IssueTypeChangedEvent';
-    createdAt: string;
-    issueType: { name: string };
-};
+// export type TypeEvent = {
+//     __typename: 'IssueTypeAddedEvent' | 'IssueTypeRemovedEvent' | 'IssueTypeChangedEvent';
+//     createdAt: string;
+//     issueType: { name: string };
+// };
 
-export type PullRequestConnectionEvent = {
-    __typename: 'ConnectedEvent' | 'DisconnectedEvent';
-    createdAt: string;
-    subject: {
-        __typename: 'PullRequest';
-        number: number;
-        closedAt: string | null;
-        mergedAt: string | null;
-    };
-};
+// export type PullRequestConnectionEvent = {
+//     __typename: 'ConnectedEvent' | 'DisconnectedEvent';
+//     createdAt: string;
+//     subject: {
+//         __typename: 'PullRequest';
+//         number: number;
+//         closedAt: string | null;
+//         mergedAt: string | null;
+//     };
+// };
 
-export type TimelineEvent = IssueEvent | AssigneeEvent | TypeEvent | PullRequestConnectionEvent;
+// export type TimelineEvent = IssueEvent | AssigneeEvent | TypeEvent | PullRequestConnectionEvent;
+
+// export type HistoricalProjectIssue = {
+//     content: {
+//         __typename: string;
+//         number: number;
+//         url: string;
+//         title: string;
+//         timelineItems: { nodes: TimelineEvent[] };
+//     };
+// };
 
 export type ProjectIssue = {
-    content: {
-        __typename: string;
-        number: number;
-        url: string;
-        title: string;
-        timelineItems: { nodes: TimelineEvent[] };
-    };
-};
-
-export type BasicProjectIssue = {
     fieldValueByName: { status: string | null } | null;
     content: {
         __typename: string;
