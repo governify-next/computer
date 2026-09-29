@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/governify-next/computer/compare/v1.1.1...v1.2.0) (2026-09-29)
+
+
+### Features
+
+* add @oas-tools/oas-telemetry for enhanced telemetry support ([7210cd0](https://github.com/governify-next/computer/commit/7210cd02ee0a98c2e1de6dda7962444294e933e0))
+* new version ([1e260fd](https://github.com/governify-next/computer/commit/1e260fdb828683763f627a216d2e003efb38f79d))
+
+
+### Bug Fixes
+
+* allow free-form strings in the status column array and unify schemas into a common class ([f950430](https://github.com/governify-next/computer/commit/f950430ce191c1e842cbfcf0206ba840b3a88b91))
+* restore events to snapshot items fetcher ([db94209](https://github.com/governify-next/computer/commit/db942092f403ffe2b71d35352da82b70a5507ae5))
+
 ## [1.1.1](https://github.com/governify-next/computer/compare/v1.1.0...v1.1.1) (2026-09-19)
 
 
