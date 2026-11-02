@@ -42,8 +42,7 @@ paths:
     /api/v1/metric/compute:
         post:
             security:
-                - UserBearerAuth: []
-                - ServiceBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Metrics
             summary: Compute metric
@@ -103,7 +102,7 @@ paths:
     /api/v1/events:
         get:
             security:
-                - UserBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Events
             summary: Get all events
@@ -137,8 +136,7 @@ paths:
             - $ref: '#/components/parameters/eventId'
         get:
             security:
-                - UserBearerAuth: []
-                - ServiceBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Events
             summary: Get event by id
@@ -169,7 +167,7 @@ paths:
             - $ref: '#/components/parameters/expand'
         post:
             security:
-                - UserBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Events
             summary: Process an event
@@ -212,8 +210,7 @@ paths:
             - $ref: '#/components/parameters/eventId'
         post:
             security:
-                - UserBearerAuth: []
-                - ServiceBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Events
             summary: Validate event configuration
@@ -255,7 +252,7 @@ paths:
     /api/v1/aggregators:
         get:
             security:
-                - UserBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Aggregators
             summary: Get all aggregators
@@ -289,8 +286,7 @@ paths:
             - $ref: '#/components/parameters/aggregatorType'
         get:
             security:
-                - UserBearerAuth: []
-                - ServiceBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Aggregators
             summary: Get aggregator by type
@@ -320,8 +316,7 @@ paths:
             - $ref: '#/components/parameters/aggregatorType'
         post:
             security:
-                - UserBearerAuth: []
-                - ServiceBearerAuth: []
+                - BearerAuth: []
             tags:
                 - Aggregators
             summary: Validate aggregator configuration
@@ -356,19 +351,13 @@ paths:
 
 components:
     securitySchemes:
-        UserBearerAuth:
+        BearerAuth:
             type: http
             scheme: bearer
             bearerFormat: JWT
             description: |
-                JWT whose `type` claim is `user`. Operations also state the minimum accepted
-                `systemRole` (`ADMIN` or `SUPERADMIN`). Role priority is
-                `USER < ADMIN < SUPERADMIN`.
-        ServiceBearerAuth:
-            type: http
-            scheme: bearer
-            bearerFormat: JWT
-            description: JWT whose `type` claim is `service`.
+                JWT issued by Authenticator. Enter only the token, without the Bearer prefix.
+                Use a user or service token according to the operation's authentication requirements.
     # ── Parameters ────────────────────────────
     parameters:
         eventId:
