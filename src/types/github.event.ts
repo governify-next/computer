@@ -42,7 +42,7 @@ import { PullRequestType } from './schema.js';
 //     };
 // };
 
-export type ProjectIssue = {
+export type IProjectIssueGithub = {
     fieldValueByName: { status: string | null } | null;
     content: {
         __typename: string;
@@ -54,7 +54,7 @@ export type ProjectIssue = {
     };
 };
 
-export type PullRequest = {
+export type IPullRequestGithub = {
     state: PullRequestType;
     createdAt: string;
     mergedAt: string | null;

@@ -3,7 +3,7 @@ import { IEvent } from '../../../types/event.js';
 import { IFetch } from '../../../types/fetch.js';
 import { getFetchByFetcherId } from '../utils/fetcher.util.js';
 import { getPeriodStartDateFromAnchorDateAndPeriod } from '../utils/window.util.js';
-import { ProjectIssue, PullRequest } from '../../../types/github.event.js';
+import { IProjectIssueGithub, IPullRequestGithub } from '../../../types/github.event.js';
 import {
     columnsSchema,
     pullRequestStatusSchema,
@@ -13,9 +13,9 @@ import {
     usernamesSchema,
 } from '../../../types/schema.js';
 
-const getProjectIssues = (fetchs: IFetch[]): ProjectIssue[] => {
+const getProjectIssues = (fetchs: IFetch[]): IProjectIssueGithub[] => {
     const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
-        .data as ProjectIssue[];
+        .data as IProjectIssueGithub[];
     return items.filter((item) => item.content?.__typename === 'Issue');
 };
 
@@ -25,8 +25,8 @@ const getProjectIssues = (fetchs: IFetch[]): ProjectIssue[] => {
 //     return items.filter((item) => item.content?.__typename === 'Issue');
 // };
 
-const getPullRequests = (fetchs: IFetch[]): PullRequest[] => {
-    return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as PullRequest[];
+const getPullRequests = (fetchs: IFetch[]): IPullRequestGithub[] => {
+    return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as IPullRequestGithub[];
 };
 
 // const getLastEventByDate = (events: TimelineEvent[], date: Date, from?: Date) => {
@@ -38,7 +38,7 @@ const getPullRequests = (fetchs: IFetch[]): PullRequest[] => {
 //         .at(-1);
 // };
 
-const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean => {
+const isIssueAtAnyStatus = (issue: IProjectIssueGithub, statuses: string[]): boolean => {
     const status = issue.fieldValueByName?.status;
     return status != null && statuses.includes(status);
 };
@@ -58,7 +58,7 @@ const isIssueAtAnyStatus = (issue: ProjectIssue, statuses: string[]): boolean =>
 //     return statusInThatMoment != null && statuses.includes(statusInThatMoment.status);
 // };
 
-const isIssueAtType = (issue: ProjectIssue, type: string) => {
+const isIssueAtType = (issue: IProjectIssueGithub, type: string) => {
     return issue.content.issueType?.name === type;
 };
 
@@ -78,7 +78,7 @@ const isIssueAtType = (issue: ProjectIssue, type: string) => {
 //     );
 // };
 
-const isIssueAssignedToUsernames = (issue: ProjectIssue, usernames: string[]) => {
+const isIssueAssignedToUsernames = (issue: IProjectIssueGithub, usernames: string[]) => {
     const assignees = issue.content.assignees.nodes.map((user) => user.login);
     return usernames.every((username) => assignees.includes(username));
 };
@@ -119,7 +119,10 @@ const isPrInStatusTimeline = (
     return closed && !merged; // CLOSED status
 };
 
-const isIssueAssociatedToPullRequestByStatus = (issue: ProjectIssue, status: PullRequestType) => {
+const isIssueAssociatedToPullRequestByStatus = (
+    issue: IProjectIssueGithub,
+    status: PullRequestType,
+) => {
     return issue.content.closedByPullRequestsReferences.nodes.some((pr) => pr.state === status);
 };
 
@@ -264,7 +267,7 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
         const { columns, type } = processConfig as { columns: string[]; type?: string };
         const issues = getProjectIssues(fetchs);
         const knownBranches = new Set<string>();
-        const issuesWithDifferentBranches: ProjectIssue[] = [];
+        const issuesWithDifferentBranches: IProjectIssueGithub[] = [];
         // TODO: se puede integrar con el evento de zenhub que comparte lógica interna
         for (const issue of issues.filter(
             (issue) => isIssueAtAnyStatus(issue, columns) && (!type || isIssueAtType(issue, type)),
