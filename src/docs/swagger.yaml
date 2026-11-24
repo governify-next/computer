@@ -366,8 +366,9 @@ components:
             required: true
             description: |
                 Event identifier supplied as free text so newly registered events can be used.
-                Current examples include `EV_GITHUB_ISSUES_BY_COLUMN`, `EV_GITHUB_PR_MERGED`,
-                `EV_ZENHUB_ISSUES_BY_COLUMN`, and `EV_BLUEJAY_LOGS_BY_LEVEL`.
+                Current examples include `EV_GITHUB_ISSUES_BY_COLUMN`,
+                `EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL`, `EV_GITHUB_PR_MERGED`,
+                `EV_ZENHUB_ISSUES_BY_COLUMN`, `EV_GITLAB_COMMITS`, and `EV_BLUEJAY_LOGS_BY_LEVEL`.
             schema:
                 type: string
                 example: EV_GITHUB_ISSUES_BY_COLUMN
@@ -718,9 +719,9 @@ components:
                     type: object
                     additionalProperties: true
                     example:
-                        owner: governify
-                        repository: computer
-                        token: github_pat_example
+                        projectIds:
+                            - PVT_kwDOBexample
+                        installationId: 12345678
             required:
                 - fetcherId
                 - fetcherConfig
