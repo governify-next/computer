@@ -23,19 +23,20 @@ import {
 } from '../../../types/schema.js';
 
 const getProjectIssues = (fetchs: IFetch[]): IProjectIssueGithub[] => {
-    const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
+    const items = getFetchByFetcherId('FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
         .data as IProjectIssueGithub[];
     return items.filter((item) => item.content?.__typename === 'Issue');
 };
 
 const getHistoricalProjectIssues = (fetchs: IFetch[]): IHistoricalProjectIssueGithub[] => {
-    const items = getFetchByFetcherId('FT_GQL_GITHUB_PROJECTV2_ITEMS_HISTORICAL', fetchs)
+    const items = getFetchByFetcherId('FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS', fetchs)
         .data as IHistoricalProjectIssueGithub[];
     return items.filter((item) => item.content?.__typename === 'Issue');
 };
 
 const getPullRequests = (fetchs: IFetch[]): IPullRequestGithub[] => {
-    return getFetchByFetcherId('FT_GQL_GITHUB_PULL_REQUESTS', fetchs).data as IPullRequestGithub[];
+    return getFetchByFetcherId('FT_HIST_GQL_GITHUB_PULL_REQUESTS', fetchs)
+        .data as IPullRequestGithub[];
 };
 
 const getLastEventByDate = (events: TimelineEvent[], date: Date, from?: Date) => {
@@ -175,7 +176,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
         example:
             'If columns is ["In Progress"] and usernames contains ["alice"], only issues in that column assigned to alice are counted.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         usernames: usernamesSchema.optional(),
@@ -208,7 +209,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
         example:
             'If columns is ["In Progress"], 5 issues are in that column and 3 have an associated branch, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         type: typeSchema,
@@ -235,7 +236,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
         example:
             'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         status: pullRequestStatusSchema,
@@ -267,7 +268,7 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
         example:
             'If columns is ["In Progress"] with issues is1->[feat/a], is2->[feat/a] and is3->[feat/b], the metric value would be 2.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         type: typeSchema,
@@ -309,7 +310,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER:
         example:
             'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS'],
+    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         usernames: usernamesSchema,
@@ -351,7 +352,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL: IEvent = {
         example:
             'If columns is ["In Progress"] and usernames contains ["alice"], only issues in that column assigned to alice are counted.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_HISTORICAL'],
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         usernames: usernamesSchema.optional(),
@@ -385,7 +386,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS_
             example:
                 'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
         },
-        fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_HISTORICAL'],
+        fetcherIds: ['FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS'],
         processConfigSchema: z.object({
             columns: columnsSchema,
             status: pullRequestStatusSchema,
@@ -418,7 +419,7 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER_
             example:
                 'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
         },
-        fetcherIds: ['FT_GQL_GITHUB_PROJECTV2_ITEMS_HISTORICAL'],
+        fetcherIds: ['FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS'],
         processConfigSchema: z.object({
             columns: columnsSchema,
             usernames: usernamesSchema,
@@ -455,7 +456,7 @@ export const EV_GITHUB_PR_MERGED: IEvent = {
         example:
             'If 10 PRs were merged this week and username is "alice", only the PRs merged by alice are counted.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -490,7 +491,7 @@ export const EV_GITHUB_MERGED_PR_BY_REVIEW_STATE: IEvent = {
         example:
             'If 10 PRs were merged this week, reviewState is "APPROVED" and username is "alice", only the PRs merged by alice with at least one approved review are counted.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
         reviewState: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED', 'DISMISSED', 'PENDING']),
@@ -530,7 +531,7 @@ export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
         example:
             'If username is "alice", the window is this week, and there are 8 PRs by others, 3 OPEN and 5 MERGED of which 4 overlapped the window, the metric value would be 7.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema,
     }),
@@ -581,7 +582,7 @@ export const EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER: IEvent = {
         example:
             'If username is "alice", there are 7 reviewable PRs from others, and alice commented on 3 of them during the window, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITHUB_PULL_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema,
     }),

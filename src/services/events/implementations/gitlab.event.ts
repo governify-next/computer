@@ -7,16 +7,16 @@ import { ICommitGitlab, IItemGitlab, IMergeRequestGitlab } from '../../../types/
 import { usernameSchema } from '../../../types/schema.js';
 
 const getCommits = (fetchs: IFetch[]): ICommitGitlab[] => {
-    return getFetchByFetcherId('FT_REST_GITLAB_COMMITS', fetchs).data as ICommitGitlab[];
+    return getFetchByFetcherId('FT_HIST_REST_GITLAB_COMMITS', fetchs).data as ICommitGitlab[];
 };
 
 const getMergeRequests = (fetchs: IFetch[]): IMergeRequestGitlab[] => {
-    return getFetchByFetcherId('FT_GQL_GITLAB_MERGE_REQUESTS', fetchs)
+    return getFetchByFetcherId('FT_HIST_GQL_GITLAB_MERGE_REQUESTS', fetchs)
         .data as IMergeRequestGitlab[];
 };
 
 const getItems = (fetchs: IFetch[]): IItemGitlab[] => {
-    return getFetchByFetcherId('FT_REST_GITLAB_ITEMS', fetchs).data as IItemGitlab[];
+    return getFetchByFetcherId('FT_SNAP_REST_GITLAB_ISSUES', fetchs).data as IItemGitlab[];
 };
 
 export const EV_GITLAB_COMMITS: IEvent = {
@@ -28,7 +28,7 @@ export const EV_GITLAB_COMMITS: IEvent = {
         example:
             'If username is "alice" and she authored 5 commits this week, 1 of them a merge commit, the metric value would be 4.',
     },
-    fetcherIds: ['FT_REST_GITLAB_COMMITS'],
+    fetcherIds: ['FT_HIST_REST_GITLAB_COMMITS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -61,7 +61,7 @@ export const EV_GITLAB_MRS_OPENED: IEvent = {
         example:
             'If username is "alice" and she created 3 merge requests this week, 1 of them already merged and 1 closed without merging, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITLAB_MERGE_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITLAB_MERGE_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -93,7 +93,7 @@ export const EV_GITLAB_MRS_MERGED: IEvent = {
         example:
             'If username is "alice" and 2 of her merge requests were merged this week, 1 of them by bob, the metric value would be 2.',
     },
-    fetcherIds: ['FT_GQL_GITLAB_MERGE_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITLAB_MERGE_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -126,7 +126,7 @@ export const EV_GITLAB_MR_COMMENTS: IEvent = {
         example:
             'If username is "alice" and she posted 3 comments this week, 2 of them on the same merge request and 1 on her own merge request, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_GITLAB_MERGE_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITLAB_MERGE_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -164,7 +164,7 @@ export const EV_GITLAB_MR_APPROVALS: IEvent = {
         example:
             'If username is "alice" and she approved 2 merge requests this week, then revoked 1 of the approvals, the metric value would be 2.',
     },
-    fetcherIds: ['FT_GQL_GITLAB_MERGE_REQUESTS'],
+    fetcherIds: ['FT_HIST_GQL_GITLAB_MERGE_REQUESTS'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),
@@ -203,7 +203,7 @@ export const EV_GITLAB_ITEMS_CLOSED: IEvent = {
         example:
             'If username is "alice" and 3 work items assigned to her were closed this week, 1 of them by bob, the metric value would be 3.',
     },
-    fetcherIds: ['FT_REST_GITLAB_ITEMS'],
+    fetcherIds: ['FT_SNAP_REST_GITLAB_ISSUES'],
     processConfigSchema: z.object({
         username: usernameSchema.optional(),
     }),

@@ -7,11 +7,11 @@ import { GithubIssue, ZenhubData, ZenhubIssue } from '../../../types/zenhub.even
 import { columnsSchema, pullRequestStatusSchema, usernameSchema } from '../../../types/schema.js';
 
 const getZenhubData = (fetchs: IFetch[]): ZenhubData => {
-    return getFetchByFetcherId('FT_GQL_ZENHUB_ISSUES', fetchs).data as ZenhubData;
+    return getFetchByFetcherId('FT_SNAP_GQL_ZENHUB_ISSUES', fetchs).data as ZenhubData;
 };
 
 const getGithubIssues = (fetchs: IFetch[]): GithubIssue[] => {
-    return getFetchByFetcherId('FT_GQL_GITHUB_ISSUES', fetchs).data as GithubIssue[];
+    return getFetchByFetcherId('FT_SNAP_GQL_GITHUB_ISSUES', fetchs).data as GithubIssue[];
 };
 
 const getZenhubIssuesByColumns = (zenhubData: ZenhubData, columns: string[]): ZenhubIssue[] => {
@@ -43,7 +43,7 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN: IEvent = {
         example:
             'If columns is ["In Progress"] and there are 5 issues in that columns, the metric value would be 5.',
     },
-    fetcherIds: ['FT_GQL_ZENHUB_ISSUES'],
+    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         afterCreatedAt: z.iso.datetime().optional(),
@@ -75,7 +75,7 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
         example:
             'If columns is ["In Progress"], 5 issues are in that pipeline and 3 have an associated branch in GitHub, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_ZENHUB_ISSUES', 'FT_GQL_GITHUB_ISSUES'],
+    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES', 'FT_SNAP_GQL_GITHUB_ISSUES'],
     processConfigSchema: z.object({
         columns: columnsSchema,
     }),
@@ -101,7 +101,7 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
         example:
             'If columns is ["In Review"], 4 issues are in that column and 3 have an OPEN PR associated, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_ZENHUB_ISSUES', 'FT_GQL_GITHUB_ISSUES'],
+    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES', 'FT_SNAP_GQL_GITHUB_ISSUES'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         status: pullRequestStatusSchema,
@@ -143,7 +143,7 @@ export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
         example:
             'If columns is ["In Progress"] with issues is1->[a], is2->[b], the metric value would be 2.',
     },
-    fetcherIds: ['FT_GQL_ZENHUB_ISSUES', 'FT_GQL_GITHUB_ISSUES'],
+    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES', 'FT_SNAP_GQL_GITHUB_ISSUES'],
     processConfigSchema: z.object({
         columns: columnsSchema,
     }),
@@ -188,7 +188,7 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_T
         example:
             'If columns is ["Closed", "Done"] and the member updated 3 issues during the current week, the metric value would be 3.',
     },
-    fetcherIds: ['FT_GQL_ZENHUB_ISSUES'],
+    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES'],
     processConfigSchema: z.object({
         columns: columnsSchema,
         username: usernameSchema,

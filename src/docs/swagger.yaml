@@ -654,7 +654,7 @@ components:
                     items:
                         type: string
                     example:
-                        - FT_GQL_GITHUB_PROJECTV2_ITEMS
+                        - FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS
                 processConfigSchema:
                     type: object
                     description: Serialized zod schema used to validate processConfig.
@@ -714,7 +714,7 @@ components:
                 fetcherId:
                     type: string
                     description: Fetcher identifier supplied as free text.
-                    example: FT_GQL_GITHUB_PROJECTV2_ITEMS
+                    example: FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS
                 fetcherConfig:
                     type: object
                     additionalProperties: true
@@ -731,7 +731,7 @@ components:
             properties:
                 fetcherId:
                     type: string
-                    example: FT_GQL_GITHUB_PROJECTV2_ITEMS
+                    example: FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS
                 fetcherConfig:
                     type: object
                     additionalProperties: true
@@ -939,7 +939,7 @@ components:
                     example: processConfig
                 fetcherId:
                     type: string
-                    example: FT_GQL_GITHUB_PROJECTV2_ITEMS
+                    example: FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS
                 code:
                     type: string
                     example: invalid_type
