@@ -19,8 +19,8 @@ const getItems = (fetchs: IFetch[]): IItemGitlab[] => {
     return getFetchByFetcherId('FT_SNAP_REST_GITLAB_ISSUES', fetchs).data as IItemGitlab[];
 };
 
-export const EV_GITLAB_COMMITS: IEvent = {
-    id: 'EV_GITLAB_COMMITS',
+export const EV_HIST_REST_GITLAB_NON_MERGE_COMMITS_AUTHORED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_REST_GITLAB_NON_MERGE_COMMITS_AUTHORED_BY_MEMBER',
     moreInfo: {
         title: 'GitLab Commits',
         description:
@@ -52,8 +52,8 @@ export const EV_GITLAB_COMMITS: IEvent = {
     },
 };
 
-export const EV_GITLAB_MRS_OPENED: IEvent = {
-    id: 'EV_GITLAB_MRS_OPENED',
+export const EV_HIST_GQL_GITLAB_OPENED_MERGE_REQUESTS_AUTHORED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITLAB_OPENED_MERGE_REQUESTS_AUTHORED_BY_MEMBER',
     moreInfo: {
         title: 'GitLab Opened Merge Requests',
         description:
@@ -84,8 +84,8 @@ export const EV_GITLAB_MRS_OPENED: IEvent = {
     },
 };
 
-export const EV_GITLAB_MRS_MERGED: IEvent = {
-    id: 'EV_GITLAB_MRS_MERGED',
+export const EV_HIST_GQL_GITLAB_MERGED_MERGE_REQUESTS_AUTHORED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITLAB_MERGED_MERGE_REQUESTS_AUTHORED_BY_MEMBER',
     moreInfo: {
         title: 'GitLab Merged Merge Requests',
         description:
@@ -117,8 +117,8 @@ export const EV_GITLAB_MRS_MERGED: IEvent = {
     },
 };
 
-export const EV_GITLAB_MR_COMMENTS: IEvent = {
-    id: 'EV_GITLAB_MR_COMMENTS',
+export const EV_HIST_GQL_GITLAB_MERGE_REQUEST_COMMENTS_AUTHORED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITLAB_MERGE_REQUEST_COMMENTS_AUTHORED_BY_MEMBER',
     moreInfo: {
         title: 'GitLab Merge Request Comments',
         description:
@@ -155,8 +155,8 @@ export const EV_GITLAB_MR_COMMENTS: IEvent = {
     },
 };
 
-export const EV_GITLAB_MR_APPROVALS: IEvent = {
-    id: 'EV_GITLAB_MR_APPROVALS',
+export const EV_HIST_GQL_GITLAB_MERGE_REQUEST_APPROVALS_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITLAB_MERGE_REQUEST_APPROVALS_BY_MEMBER',
     moreInfo: {
         title: 'GitLab Merge Request Approvals',
         description:
@@ -194,8 +194,8 @@ export const EV_GITLAB_MR_APPROVALS: IEvent = {
     },
 };
 
-export const EV_GITLAB_ITEMS_CLOSED: IEvent = {
-    id: 'EV_GITLAB_ITEMS_CLOSED',
+export const EV_SNAP_REST_GITLAB_CLOSED_ISSUES_ASSIGNED_TO_MEMBER: IEvent = {
+    id: 'EV_SNAP_REST_GITLAB_CLOSED_ISSUES_ASSIGNED_TO_MEMBER',
     moreInfo: {
         title: 'GitLab Closed Work Items',
         description:

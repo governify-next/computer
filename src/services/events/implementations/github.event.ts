@@ -166,9 +166,8 @@ const isIssueAssociatedToPullRequestByStatusTimeline = (
     return false;
 };
 
-// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES, COUNT_INPROGRESSISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN',
+export const EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE: IEvent = {
+    id: 'EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE',
     moreInfo: {
         title: 'Issues by Status',
         description:
@@ -199,9 +198,8 @@ export const EV_GITHUB_ISSUES_BY_COLUMN: IEvent = {
     },
 };
 
-// Uso de tpa: COUNT_INPROGRESS_ISSUES_WITH_ASSOCIATED_BRANCHES
-export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES',
+export const EV_SNAP_GQL_GITHUB_ISSUES_WITH_BRANCHES_BY_COLUMN_BY_TYPE: IEvent = {
+    id: 'EV_SNAP_GQL_GITHUB_ISSUES_WITH_BRANCHES_BY_COLUMN_BY_TYPE',
     moreInfo: {
         title: 'Issues by Status with Associated Branches',
         description:
@@ -226,9 +224,8 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
     },
 };
 
-// Uso de tpa: COUNT_INREVIEW_ISSUES_WITH_ASSOCIATED_OPEN_PR, COUNT_DONE_ISSUES_WITH_ASSOCIATED_CLOSED_PR
-export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS',
+export const EV_SNAP_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_BY_TYPE: IEvent = {
+    id: 'EV_SNAP_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_BY_TYPE',
     moreInfo: {
         title: 'Issues by Status with Associated Pull Requests by PR State',
         description:
@@ -258,9 +255,8 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS:
     },
 };
 
-// Uso de tpa: COUNT_BRANCHES_ASSOCIATED_TO_INPROGRESS_ISSUES
-export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
-    id: 'EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN',
+export const EV_SNAP_GQL_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN_BY_TYPE: IEvent = {
+    id: 'EV_SNAP_GQL_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN_BY_TYPE',
     moreInfo: {
         title: 'Distinct Branches by Status',
         description:
@@ -300,51 +296,50 @@ export const EV_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     },
 };
 
-// Uso de tpa: COUNT_DONEISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER',
-    moreInfo: {
-        title: 'Issues by Status Assigned to Member Filtered by Period',
-        description:
-            'Number of issues in the specified status columns of the GitHub ProjectV2 assigned to specific members whose last update falls within the current period window. Optionally filtered by issue type.',
-        example:
-            'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
-    },
-    fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
-    processConfigSchema: z.object({
-        columns: columnsSchema,
-        usernames: usernamesSchema,
-        type: typeSchema,
-    }),
-    process(date, window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns, usernames, type } = processConfig as {
-            columns: string[];
-            usernames: string[];
-            type?: string;
-        };
-        const issues = getProjectIssues(fetchs);
-        const from = getPeriodStartDateFromAnchorDateAndPeriod(
-            date,
-            window.anchorDate,
-            window.period,
-        );
-        const to = new Date(date);
-        return issues.filter((issue) => {
-            const updatedAt = new Date(issue.content.updatedAt);
-            return (
-                isIssueAtAnyStatus(issue, columns) &&
-                (!type || isIssueAtType(issue, type)) &&
-                isIssueAssignedToUsernames(issue, usernames) &&
-                updatedAt >= from &&
-                updatedAt <= to
+export const EV_SNAP_GQL_GITHUB_ISSUES_UPDATED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE: IEvent =
+    {
+        id: 'EV_SNAP_GQL_GITHUB_ISSUES_UPDATED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE',
+        moreInfo: {
+            title: 'Issues by Status Assigned to Member Filtered by Period',
+            description:
+                'Number of issues in the specified status columns of the GitHub ProjectV2 assigned to specific members whose last update falls within the current period window. Optionally filtered by issue type.',
+            example:
+                'If columns is ["Done", "Closed"] and the member updated 3 issues during the current week, the metric value would be 3.',
+        },
+        fetcherIds: ['FT_SNAP_GQL_GITHUB_PROJECTV2_ITEMS'],
+        processConfigSchema: z.object({
+            columns: columnsSchema,
+            usernames: usernamesSchema,
+            type: typeSchema,
+        }),
+        process(date, window, fetchs, processConfig): Record<string, unknown>[] {
+            const { columns, usernames, type } = processConfig as {
+                columns: string[];
+                usernames: string[];
+                type?: string;
+            };
+            const issues = getProjectIssues(fetchs);
+            const from = getPeriodStartDateFromAnchorDateAndPeriod(
+                date,
+                window.anchorDate,
+                window.period,
             );
-        });
-    },
-};
+            const to = new Date(date);
+            return issues.filter((issue) => {
+                const updatedAt = new Date(issue.content.updatedAt);
+                return (
+                    isIssueAtAnyStatus(issue, columns) &&
+                    (!type || isIssueAtType(issue, type)) &&
+                    isIssueAssignedToUsernames(issue, usernames) &&
+                    updatedAt >= from &&
+                    updatedAt <= to
+                );
+            });
+        },
+    };
 
-// Uso de tpa: COUNT_INPROGRESS_ISSUES, COUNT_INREVIEW_ISSUES, COUNT_DONE_ISSUES, COUNT_INPROGRESSISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL: IEvent = {
-    id: 'EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL',
+export const EV_HIST_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE: IEvent = {
+    id: 'EV_HIST_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE',
     moreInfo: {
         title: 'Issues by Status',
         description:
@@ -375,43 +370,40 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL: IEvent = {
     },
 };
 
-// Uso de tpa: COUNT_INREVIEW_ISSUES_WITH_ASSOCIATED_OPEN_PR, COUNT_DONE_ISSUES_WITH_ASSOCIATED_CLOSED_PR
-export const EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS_HISTORICAL: IEvent =
-    {
-        id: 'EV_GITHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS_HISTORICAL',
-        moreInfo: {
-            title: 'Issues by Status with Associated Pull Requests by PR State',
-            description:
-                'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one associated pull request in the specified PR state. Optionally filtered by issue type.',
-            example:
-                'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
-        },
-        fetcherIds: ['FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS'],
-        processConfigSchema: z.object({
-            columns: columnsSchema,
-            status: pullRequestStatusSchema,
-            type: typeSchema,
-        }),
-        process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
-            const { columns, status, type } = processConfig as {
-                columns: string[];
-                status: PullRequestType;
-                type?: string;
-            };
-            const issues = getHistoricalProjectIssues(fetchs);
-            return issues.filter(
-                (issue) =>
-                    isIssueAtAnyStatusTimeline(issue, columns, date) &&
-                    (!type || isIssueAtTypeTimeline(issue, type, date)) &&
-                    isIssueAssociatedToPullRequestByStatusTimeline(issue, status, date),
-            );
-        },
-    };
+export const EV_HIST_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_BY_TYPE: IEvent = {
+    id: 'EV_HIST_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_BY_TYPE',
+    moreInfo: {
+        title: 'Issues by Status with Associated Pull Requests by PR State',
+        description:
+            'Number of issues in the specified status columns of the GitHub ProjectV2 that have at least one associated pull request in the specified PR state. Optionally filtered by issue type.',
+        example:
+            'If columns is ["In Review"], status is "OPEN", 4 issues are in that column and 3 have an OPEN PR, the metric value would be 3.',
+    },
+    fetcherIds: ['FT_HIST_GQL_GITHUB_PROJECTV2_ITEMS'],
+    processConfigSchema: z.object({
+        columns: columnsSchema,
+        status: pullRequestStatusSchema,
+        type: typeSchema,
+    }),
+    process(date, _window, fetchs, processConfig): Record<string, unknown>[] {
+        const { columns, status, type } = processConfig as {
+            columns: string[];
+            status: PullRequestType;
+            type?: string;
+        };
+        const issues = getHistoricalProjectIssues(fetchs);
+        return issues.filter(
+            (issue) =>
+                isIssueAtAnyStatusTimeline(issue, columns, date) &&
+                (!type || isIssueAtTypeTimeline(issue, type, date)) &&
+                isIssueAssociatedToPullRequestByStatusTimeline(issue, status, date),
+        );
+    },
+};
 
-// Uso de tpa: COUNT_DONEISSUES_MEMBER
-export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER_HISTORICAL: IEvent =
+export const EV_HIST_GQL_GITHUB_ISSUES_MOVED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE: IEvent =
     {
-        id: 'EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER_HISTORICAL',
+        id: 'EV_HIST_GQL_GITHUB_ISSUES_MOVED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE',
         moreInfo: {
             title: 'Issues by Status Assigned to Member Filtered by Period',
             description:
@@ -446,9 +438,8 @@ export const EV_GITHUB_ISSUES_BY_COLUMN_FILTERED_BY_PERIOD_ASSOCIATED_TO_MEMBER_
         },
     };
 
-// Uso del tpa: COUNT_PR_MERGED_TEAM, COUNT_PR_MERGED_MEMBER
-export const EV_GITHUB_PR_MERGED: IEvent = {
-    id: 'EV_GITHUB_PR_MERGED',
+export const EV_HIST_GQL_GITHUB_MERGED_PULL_REQUESTS_MERGED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITHUB_MERGED_PULL_REQUESTS_MERGED_BY_MEMBER',
     moreInfo: {
         title: 'Merged Pull Requests',
         description:
@@ -480,50 +471,54 @@ export const EV_GITHUB_PR_MERGED: IEvent = {
     },
 };
 
-// Uso del tpa: COUNT_MERGED_PR_WITH_POSITIVE_REVIEWS_TEAM, COUNT_MERGED_PR_WITH_POSITIVE_REVIEWS_MEMBER
-// Necesidad de separar de la anterior por uso compartido en una garantía
-export const EV_GITHUB_MERGED_PR_BY_REVIEW_STATE: IEvent = {
-    id: 'EV_GITHUB_MERGED_PR_BY_REVIEW_STATE',
-    moreInfo: {
-        title: 'Merged Pull Requests by Review State',
-        description:
-            'Number of pull requests merged within the current period window that have at least one review in the specified state. Optionally filtered by the user who performed the merge.',
-        example:
-            'If 10 PRs were merged this week, reviewState is "APPROVED" and username is "alice", only the PRs merged by alice with at least one approved review are counted.',
-    },
-    fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
-    processConfigSchema: z.object({
-        username: usernameSchema.optional(),
-        reviewState: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED', 'DISMISSED', 'PENDING']),
-    }),
-    process(date, window, fetchs, processConfig): Record<string, unknown>[] {
-        const pullRequests = getPullRequests(fetchs);
-        const from = getPeriodStartDateFromAnchorDateAndPeriod(
-            date,
-            window.anchorDate,
-            window.period,
-        );
-        const to = new Date(date);
-        return pullRequests.filter((pr) => {
-            if (!pr.mergedAt) return false;
-            const mergedAt = new Date(pr.mergedAt);
-            return (
-                mergedAt >= from &&
-                mergedAt <= to &&
-                (!processConfig.username || pr.mergedBy?.login === processConfig.username) &&
-                pr.reviews.nodes.some(
-                    (review) =>
-                        review.state === processConfig.reviewState &&
-                        new Date(review.createdAt) <= to,
-                )
+export const EV_HIST_GQL_GITHUB_MERGED_PULL_REQUESTS_WITH_REVIEWS_BY_STATE_MERGED_BY_MEMBER: IEvent =
+    {
+        id: 'EV_HIST_GQL_GITHUB_MERGED_PULL_REQUESTS_WITH_REVIEWS_BY_STATE_MERGED_BY_MEMBER',
+        moreInfo: {
+            title: 'Merged Pull Requests by Review State',
+            description:
+                'Number of pull requests merged within the current period window that have at least one review in the specified state. Optionally filtered by the user who performed the merge.',
+            example:
+                'If 10 PRs were merged this week, reviewState is "APPROVED" and username is "alice", only the PRs merged by alice with at least one approved review are counted.',
+        },
+        fetcherIds: ['FT_HIST_GQL_GITHUB_PULL_REQUESTS'],
+        processConfigSchema: z.object({
+            username: usernameSchema.optional(),
+            reviewState: z.enum([
+                'APPROVED',
+                'CHANGES_REQUESTED',
+                'COMMENTED',
+                'DISMISSED',
+                'PENDING',
+            ]),
+        }),
+        process(date, window, fetchs, processConfig): Record<string, unknown>[] {
+            const pullRequests = getPullRequests(fetchs);
+            const from = getPeriodStartDateFromAnchorDateAndPeriod(
+                date,
+                window.anchorDate,
+                window.period,
             );
-        });
-    },
-};
+            const to = new Date(date);
+            return pullRequests.filter((pr) => {
+                if (!pr.mergedAt) return false;
+                const mergedAt = new Date(pr.mergedAt);
+                return (
+                    mergedAt >= from &&
+                    mergedAt <= to &&
+                    (!processConfig.username || pr.mergedBy?.login === processConfig.username) &&
+                    pr.reviews.nodes.some(
+                        (review) =>
+                            review.state === processConfig.reviewState &&
+                            new Date(review.createdAt) <= to,
+                    )
+                );
+            });
+        },
+    };
 
-// Uso del tpa: COUNT_PR
-export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
-    id: 'EV_GITHUB_PRS_FROM_OTHERS',
+export const EV_HIST_GQL_GITHUB_REVIEWABLE_PULL_REQUESTS_NOT_AUTHORED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITHUB_REVIEWABLE_PULL_REQUESTS_NOT_AUTHORED_BY_MEMBER',
     moreInfo: {
         title: 'Reviewable Pull Requests from Others',
         description:
@@ -571,10 +566,8 @@ export const EV_GITHUB_PRS_FROM_OTHERS: IEvent = {
     },
 };
 
-// Uso del tpa: COUNT_PRS_WITH_AT_LEAST_ONE_COMMENT_OR_ONE_REVIEW_COMMENT_BY_MEMBER
-// Necesidad de separar de la anterior por uso compartido en una garantía
-export const EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER: IEvent = {
-    id: 'EV_GITHUB_PRS_WITH_COMMENT_OR_REVIEW_BY_MEMBER',
+export const EV_HIST_GQL_GITHUB_REVIEWABLE_PULL_REQUESTS_COMMENTED_OR_REVIEWED_BY_MEMBER: IEvent = {
+    id: 'EV_HIST_GQL_GITHUB_REVIEWABLE_PULL_REQUESTS_COMMENTED_OR_REVIEWED_BY_MEMBER',
     moreInfo: {
         title: 'Pull Requests from Others with Participation by Member',
         description:

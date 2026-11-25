@@ -34,8 +34,8 @@ const getGithubIssuesMatchingZenhubIssues = (
     );
 };
 
-export const EV_ZENHUB_ISSUES_BY_COLUMN: IEvent = {
-    id: 'EV_ZENHUB_ISSUES_BY_COLUMN',
+export const EV_SNAP_GQL_ZENHUB_ISSUES_BY_COLUMN_CREATED_AFTER_DATE_ASSIGNED_TO_MEMBER: IEvent = {
+    id: 'EV_SNAP_GQL_ZENHUB_ISSUES_BY_COLUMN_CREATED_AFTER_DATE_ASSIGNED_TO_MEMBER',
     moreInfo: {
         title: 'ZenHub Issues by Column',
         description:
@@ -66,8 +66,8 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN: IEvent = {
     },
 };
 
-export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
-    id: 'EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES',
+export const EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_BRANCHES_BY_COLUMN: IEvent = {
+    id: 'EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_BRANCHES_BY_COLUMN',
     moreInfo: {
         title: 'ZenHub Issues by Column with Associated Branches',
         description:
@@ -92,50 +92,54 @@ export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_BRANCHES: IEvent = {
     },
 };
 
-export const EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS: IEvent = {
-    id: 'EV_ZENHUB_ISSUES_BY_COLUMN_WITH_ASSOCIATED_PULL_REQUESTS_BY_STATUS',
-    moreInfo: {
-        title: 'ZenHub Issues by Column with Associated Pull Requests by Status',
-        description:
-            'Number of ZenHub issues in the specified columns that have at least one associated pull request in the specified PR state.',
-        example:
-            'If columns is ["In Review"], 4 issues are in that column and 3 have an OPEN PR associated, the metric value would be 3.',
-    },
-    fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES', 'FT_SNAP_GQL_GITHUB_ISSUES'],
-    processConfigSchema: z.object({
-        columns: columnsSchema,
-        status: pullRequestStatusSchema,
-        afterCreatedAt: z.iso.datetime().optional(),
-    }),
-    process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
-        const { columns, afterCreatedAt } = processConfig as {
-            columns: string[];
-            afterCreatedAt?: string;
-        };
-        const zenhubData = getZenhubData(fetchs);
-        const githubIssues = getGithubIssues(fetchs);
-        const zenhubIssues = getZenhubIssuesByColumns(zenhubData, columns);
-        const matchedGithubIssues = getGithubIssuesMatchingZenhubIssues(githubIssues, zenhubIssues);
-        let filteredIssues = matchedGithubIssues.filter((issue) =>
-            issue.closedByPullRequestsReferences.nodes.some(
-                (pr) => pr.state === processConfig.status,
-            ),
-        );
-        if (afterCreatedAt) {
-            const afterDate = new Date(afterCreatedAt);
-            filteredIssues = filteredIssues.filter(
-                (issue) => new Date(issue.createdAt) >= afterDate,
+export const EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_CREATED_AFTER_DATE: IEvent =
+    {
+        id: 'EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_PULL_REQUESTS_BY_STATUS_BY_COLUMN_CREATED_AFTER_DATE',
+        moreInfo: {
+            title: 'ZenHub Issues by Column with Associated Pull Requests by Status',
+            description:
+                'Number of ZenHub issues in the specified columns that have at least one associated pull request in the specified PR state.',
+            example:
+                'If columns is ["In Review"], 4 issues are in that column and 3 have an OPEN PR associated, the metric value would be 3.',
+        },
+        fetcherIds: ['FT_SNAP_GQL_ZENHUB_ISSUES', 'FT_SNAP_GQL_GITHUB_ISSUES'],
+        processConfigSchema: z.object({
+            columns: columnsSchema,
+            status: pullRequestStatusSchema,
+            afterCreatedAt: z.iso.datetime().optional(),
+        }),
+        process(_date, _window, fetchs, processConfig): Record<string, unknown>[] {
+            const { columns, afterCreatedAt } = processConfig as {
+                columns: string[];
+                afterCreatedAt?: string;
+            };
+            const zenhubData = getZenhubData(fetchs);
+            const githubIssues = getGithubIssues(fetchs);
+            const zenhubIssues = getZenhubIssuesByColumns(zenhubData, columns);
+            const matchedGithubIssues = getGithubIssuesMatchingZenhubIssues(
+                githubIssues,
+                zenhubIssues,
             );
-        }
-        return filteredIssues;
-    },
-};
+            let filteredIssues = matchedGithubIssues.filter((issue) =>
+                issue.closedByPullRequestsReferences.nodes.some(
+                    (pr) => pr.state === processConfig.status,
+                ),
+            );
+            if (afterCreatedAt) {
+                const afterDate = new Date(afterCreatedAt);
+                filteredIssues = filteredIssues.filter(
+                    (issue) => new Date(issue.createdAt) >= afterDate,
+                );
+            }
+            return filteredIssues;
+        },
+    };
 
 // TODO: el sistema actual (legacy del antiguo) puede no funcionar bien para algún caso límite
 // Ej: is1->[a,b], is2->[a], devuelve 1, aunque podrían ser 2 si se coge primero is2
 // Esto se puede resolver con algoritmos como maximum matching.
-export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
-    id: 'EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN',
+export const EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
+    id: 'EV_SNAP_GQL_ZENHUB_SNAP_GQL_GITHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN',
     moreInfo: {
         title: 'ZenHub Issues with Different Branches',
         description:
@@ -179,8 +183,8 @@ export const EV_ZENHUB_ISSUES_WITH_DIFFERENT_BRANCHES_BY_COLUMN: IEvent = {
     },
 };
 
-export const EV_ZENHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER: IEvent = {
-    id: 'EV_ZENHUB_ISSUES_BY_COLUMN_FILTERED_BY_UPDATED_AT_DATE_ASSOCIATED_TO_MEMBER',
+export const EV_SNAP_GQL_ZENHUB_ISSUES_UPDATED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBER: IEvent = {
+    id: 'EV_SNAP_GQL_ZENHUB_ISSUES_UPDATED_IN_PERIOD_BY_COLUMN_ASSIGNED_TO_MEMBER',
     moreInfo: {
         title: 'ZenHub Issues by Column Assigned to Member Filtered by Update Date',
         description:

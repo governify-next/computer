@@ -366,12 +366,12 @@ components:
             required: true
             description: |
                 Event identifier supplied as free text so newly registered events can be used.
-                Current examples include `EV_GITHUB_ISSUES_BY_COLUMN`,
-                `EV_GITHUB_ISSUES_BY_COLUMN_HISTORICAL`, `EV_GITHUB_PR_MERGED`,
-                `EV_ZENHUB_ISSUES_BY_COLUMN`, `EV_GITLAB_COMMITS`, and `EV_BLUEJAY_LOGS_BY_LEVEL`.
+                Current examples include `EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE`,
+                `EV_HIST_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE`, `EV_HIST_GQL_GITHUB_MERGED_PULL_REQUESTS_MERGED_BY_MEMBER`,
+                `EV_SNAP_GQL_ZENHUB_ISSUES_BY_COLUMN_CREATED_AFTER_DATE_ASSIGNED_TO_MEMBER`, `EV_HIST_REST_GITLAB_NON_MERGE_COMMITS_AUTHORED_BY_MEMBER`, and `EV_BLUEJAY_LOGS_BY_LEVEL`.
             schema:
                 type: string
-                example: EV_GITHUB_ISSUES_BY_COLUMN
+                example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
         expand:
             name: expand
             in: query
@@ -631,7 +631,7 @@ components:
                 id:
                     type: string
                     description: Registered event identifier supplied as free text.
-                    example: EV_GITHUB_ISSUES_BY_COLUMN
+                    example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
                 moreInfo:
                     type: object
                     additionalProperties: false
@@ -872,7 +872,7 @@ components:
                         additionalProperties: true
                 eventId:
                     type: string
-                    example: EV_GITHUB_ISSUES_BY_COLUMN
+                    example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
                 date:
                     type: string
                     format: date-time
@@ -906,7 +906,7 @@ components:
                         additionalProperties: true
                 eventId:
                     type: string
-                    example: EV_GITHUB_ISSUES_BY_COLUMN
+                    example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
                 date:
                     type: string
                     format: date-time
@@ -1063,7 +1063,7 @@ components:
                         eventId:
                             type: string
                             description: Event identifier supplied as free text.
-                            example: EV_GITHUB_ISSUES_BY_COLUMN
+                            example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
                         window:
                             $ref: '#/components/schemas/Window'
                         fetcherConfigs:
@@ -1126,7 +1126,7 @@ components:
                             properties:
                                 eventId:
                                     type: string
-                                    example: EV_GITHUB_ISSUES_BY_COLUMN
+                                    example: EV_SNAP_GQL_GITHUB_ISSUES_BY_COLUMN_ASSIGNED_TO_MEMBERS_BY_TYPE
                                 fetcherConfigs:
                                     type: array
                                     description: |
